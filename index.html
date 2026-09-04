@@ -34,148 +34,135 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // ⚠️ 구글 앱스 스크립트 배포 웹 앱 URL을 여기에 붙여넣으세요.
+        // ⚠️ 구글 앱스 스크립트 배포 웹 앱 URL
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwvtqNgQOHNCqMXhnX8L_FOQyoIDKJJ6ubrjX0XZV5-ftzaPRVK_d784gkPyUBc2XIjRA/exec";
 
         const CLASS_OPTIONS = ['a8반', 'b7반', 'c6반', 'e1반'];
 
         const wordsData = [
-    { ko: "흙", jp: "つち [츠치]" },
-    { ko: "뱀", jp: "へび [헤비]" },
-    { ko: "항아리", jp: "つぼ [츠보]" },
-    { ko: "술", jp: "さけ [사케]" },
-    { ko: "친구", jp: "ともだち [토모다치]" },
-    { ko: "염소", jp: "やぎ [야기]" },
-    { ko: "가죽", jp: "かわ(革) [카와]" },
-    { ko: "북", jp: "たいこ [타이코]" },
-    { ko: "리듬", jp: "リズム [리즈무]" },
-    { ko: "축제", jp: "まつり [마츠리]" },
-    { ko: "솜", jp: "わた [와타]" },
-    { ko: "실", jp: "いと [이토]" },
-    { ko: "천", jp: "ぬの [누노]" },
-    { ko: "옷", jp: "きもの [키모노]" },
-    { ko: "허수아비", jp: "かかし [카카시]" },
-    { ko: "돌", jp: "いし [이시]" },
-    { ko: "철", jp: "てつ [테츠]" },
-    { ko: "가위", jp: "はさみ [하사미]" },
-    { ko: "오린 것", jp: "きりぬき [키리누키]" },
-    { ko: "그림책", jp: "えほん [에혼]" },
+            { ko: "흙", jp: "つち [츠치]" },
+            { ko: "뱀", jp: "へび [헤비]" },
+            { ko: "항아리", jp: "つぼ [츠보]" },
+            { ko: "술", jp: "さけ [사케]" },
+            { ko: "친구", jp: "ともだち [토모다치]" },
+            { ko: "염소", jp: "やぎ [야기]" },
+            { ko: "가죽", jp: "かわ(革) [카와]" },
+            { ko: "북", jp: "たいこ [타이코]" },
+            { ko: "리듬", jp: "リズム [리즈무]" },
+            { ko: "축제", jp: "まつり [마츠리]" },
+            { ko: "솜", jp: "わた [와타]" },
+            { ko: "실", jp: "いと [이토]" },
+            { ko: "천", jp: "ぬの [누노]" },
+            { ko: "옷", jp: "きもの [키모노]" },
+            { ko: "허수아비", jp: "かかし [카카시]" },
+            { ko: "돌", jp: "いし [이시]" },
+            { ko: "철", jp: "てつ [테츠]" },
+            { ko: "가위", jp: "はさみ [하사미]" },
+            { ko: "오린 것", jp: "きりぬき [키리누키]" },
+            { ko: "그림책", jp: "えほん [에혼]" },
+            { ko: "물", jp: "みず [미즈]" },
+            { ko: "강", jp: "かわ(川) [카와]" },
+            { ko: "댐", jp: "ダム [다무]" },
+            { ko: "전기", jp: "でんき [덴키]" },
+            { ko: "빛, 등불", jp: "あかり [아카리]" },
+            { ko: "해님", jp: "おひさま [오히사마]" },
+            { ko: "채소", jp: "やさい [야사이]" },
+            { ko: "샐러드", jp: "サラダ [사라다]" },
+            { ko: "몸", jp: "からだ [카라다]" },
+            { ko: "기록", jp: "きろく [키로쿠]" },
+            { ko: "성냥", jp: "マッチ [맛치]" },
+            { ko: "불", jp: "ひ [히]" },
+            { ko: "모닥불", jp: "たきび [타키비]" },
+            { ko: "군고구마", jp: "やきいも [야키이모]" },
+            { ko: "방귀", jp: "おなら [오나라]" },
+            { ko: "나무", jp: "き [키]" },
+            { ko: "통나무", jp: "まるた [마루타]" },
+            { ko: "다리", jp: "はし [하시]" },
+            { ko: "길", jp: "みち [미치]" },
+            { ko: "마을, 동네", jp: "まち [마치]" },
+            { ko: "닭", jp: "にわとり [니와토리]" },
+            { ko: "달걀", jp: "たまご [타마고]" },
+            { ko: "닭꼬치", jp: "やきとり [야키토리]" },
+            { ko: "돈", jp: "おかね [오카네]" },
+            { ko: "사람", jp: "ひと [히토]" },
+            { ko: "병사", jp: "へいたい [헤이타이]" },
+            { ko: "군대", jp: "ぐんたい [군타이]" },
+            { ko: "전쟁", jp: "せんそう [센소]" }
+        ];
 
-    // ⑤번 단어
-    { ko: "물", jp: "みず [미즈]" },
-    { ko: "강", jp: "かわ(川) [카와]" },
-    { ko: "댐", jp: "ダム [다무]" },
-    { ko: "전기", jp: "でんき [덴키]" },
-    { ko: "빛, 등불", jp: "あかり [아카리]" },
+        // 3번 구조 반영: 질문(q)과 답변(a)을 분리 + 발음 [괄호] 추가
+        const standardSentences = [
+            // 1번 이미지 (흙 ~ 술)
+            { q_ko: "흙으로 무엇 만들어?", q_jp: "つちで なに つくる [츠치데 나니 츠쿠루]", a_ko: "흙으로 뱀 만들어", a_jp: "つちで へび つくる [츠치데 헤비 츠쿠루]" },
+            { q_ko: "뱀으로 무엇 만들어?", q_jp: "へびで なに つくる [헤비데 나니 츠쿠루]", a_ko: "뱀으로 항아리 만들어", a_jp: "へびで つぼ つくる [헤비데 츠보 츠쿠루]" },
+            { q_ko: "항아리로 무엇 만들어?", q_jp: "つぼで なに つくる [츠보데 나니 츠쿠루]", a_ko: "항아리로 술 만들어", a_jp: "つぼで さけ つくる [츠보데 사케 츠쿠루]" },
+            { q_ko: "술은 무엇 만들어?", q_jp: "さけは なに つくる [사케와 나니 츠쿠루]", a_ko: "술은 친구 만들어", a_jp: "さけは ともだち つくる [사케와 토모다치 츠쿠루]" },
 
-    // ⑥번 단어
-    { ko: "해님", jp: "おひさま [오히사마]" },
-    { ko: "채소", jp: "やさい [야사이]" },
-    { ko: "샐러드", jp: "サラダ [사라다]" },
-    { ko: "몸", jp: "からだ [카라다]" },
-    { ko: "기록", jp: "きろく [키로쿠]" },
+            // 2번 이미지 (염소 ~ 리듬)
+            { q_ko: "염소로 무엇 만들어?", q_jp: "やぎで なに つくる [야기데 나니 츠쿠루]", a_ko: "염소로 가죽 만들어", a_jp: "やぎで かわ つくる [야기데 카와 츠쿠루]" },
+            { q_ko: "가죽으로 무엇 만들어?", q_jp: "かわで なに つくる [카와데 나니 츠쿠루]", a_ko: "가죽으로 북 만들어", a_jp: "かわで たいこ つくる [카와데 타이코 츠쿠루]" },
+            { q_ko: "북으로 무엇 만들어?", q_jp: "たいこで なに つくる [타이코데 나니 츠쿠루]", a_ko: "북으로 리듬 만들어", a_jp: "たいこで リズム つくる [타이코데 리즈무 츠쿠루]" },
+            { q_ko: "리듬은 무엇 만들어?", q_jp: "リズムは なに つくる [리즈무와 나니 츠쿠루]", a_ko: "리듬은 축제 만들어", a_jp: "リズムは まつり つくる [리즈무와 마츠리 츠쿠루]" },
 
-    // ⑦번 단어
-    { ko: "성냥", jp: "マッチ [맛치]" },
-    { ko: "불", jp: "ひ [히]" },
-    { ko: "모닥불", jp: "たきび [타키비]" },
-    { ko: "군고구마", jp: "やきいも [야키이모]" },
-    { ko: "방귀", jp: "おなら [오나라]" },
+            // 3번 이미지 (솜 ~ 옷)
+            { q_ko: "솜으로 무엇 만들어?", q_jp: "わたで なに つくる [와타데 나니 츠쿠루]", a_ko: "솜으로 실 만들어", a_jp: "わたで いと つくる [와타데 이토 츠쿠루]" },
+            { q_ko: "실로 무엇 만들어?", q_jp: "いとで なに つくる [이토데 나니 츠쿠루]", a_ko: "실로 천 만들어", a_jp: "いとで ぬの つくる [이토데 누노 츠쿠루]" },
+            { q_ko: "천으로 무엇 만들어?", q_jp: "ぬので なに つくる [누노데 나니 츠쿠루]", a_ko: "천으로 옷 만들어", a_jp: "ぬので きもの つくる [누노데 키모노 츠쿠루]" },
+            { q_ko: "옷으로 무엇 만들어?", q_jp: "きもので なに つくる [키모노데 나니 츠쿠루]", a_ko: "옷으로 허수아비 만들어", a_jp: "きもので かかし つくる [키모노데 카카시 츠쿠루]" },
 
-    // ⑧번 단어
-    { ko: "나무", jp: "き [키]" },
-    { ko: "통나무", jp: "まるた [마루타]" },
-    { ko: "다리", jp: "はし [하시]" },
-    { ko: "길", jp: "みち [미치]" },
-    { ko: "마을, 동네", jp: "まち [마치]" },
+            // 4번 이미지 (돌 ~ 오린 것)
+            { q_ko: "돌로 무엇 만들어?", q_jp: "いしで なに つくる [이시데 나니 츠쿠루]", a_ko: "돌로 철 만들어", a_jp: "いしで てつ つくる [이시데 테츠 츠쿠루]" },
+            { q_ko: "철로 무엇 만들어?", q_jp: "てつで なに つくる [테츠데 나니 츠쿠루]", a_ko: "철로 가위 만들어", a_jp: "てつで はさみ つくる [테츠데 하사미 츠쿠루]" },
+            { q_ko: "가위로 무엇 만들어?", q_jp: "はさみで なに つくる [하사미데 나니 츠쿠루]", a_ko: "가위로 오린 것 만들어", a_jp: "はさみで きりぬき つくる [하사미데 키리누키 츠쿠루]" },
+            { q_ko: "오린 것으로 무엇 만들어?", q_jp: "きりぬきで なに つくる [키리ぬき데 나니 츠쿠루]", a_ko: "오린 것으로 그림책 만들어", a_jp: "きりぬきで えほん つくる [키리ぬき데 에혼 츠쿠루]" },
 
-    // ⑨번 단어
-    { ko: "닭", jp: "にわとり [니와토리]" },
-    { ko: "달걀", jp: "たまご [타마고]" },
-    { ko: "닭꼬치", jp: "やきとり [야키토리]" },
-    { ko: "돈", jp: "おかね [오카네]" },
+            // 5번 이미지 (물 ~ 전기)
+            { q_ko: "물은 무엇 만들어?", q_jp: "みずは なに つくる [미즈와 나니 츠쿠루]", a_ko: "물은 강 만들어", a_jp: "みずは かわ つくる [미즈와 카와 츠쿠루]" },
+            { q_ko: "강으로 무엇 만들어?", q_jp: "かわで なに つくる [카와데 나니 츠쿠루]", a_ko: "강으로 댐 만들어", a_jp: "かわで ダム つくる [카와데 다무 츠쿠루]" },
+            { q_ko: "댐으로 무엇 만들어?", q_jp: "ダムで なに つくる [다무데 나니 츠쿠루]", a_ko: "댐으로 전기 만들어", a_jp: "ダムで でんき つくる [다무데 덴키 츠쿠루]" },
+            { q_ko: "전기가 무엇 만들어?", q_jp: "でんきが なに つくる [덴키가 나니 츠쿠루]", a_ko: "전기가 빛 만들어", a_jp: "でんきが あかり つくる [덴키가 아카리 츠쿠루]" },
 
-    // ⑩번 단어
-    { ko: "사람", jp: "ひと [히토]" },
-    { ko: "병사", jp: "へいたい [헤이타이]" },
-    { ko: "군대", jp: "ぐんたい [군타이]" },
-    { ko: "전쟁", jp: "せんそう [센소]" }
-];
+            // 6번 이미지 (햇님 ~ 몸)
+            { q_ko: "햇님은 무엇 만들어?", q_jp: "おひさまは なに つくる [오히사마와 나니 츠쿠루]", a_ko: "햇님은 야채 만들어", a_jp: "おひさまは やさい つくる [오히사마와 야사이 츠쿠루]" },
+            { q_ko: "야채로 무엇 만들어?", q_jp: "やさいで なに つくる [야사이데 나니 츠쿠루]", a_ko: "야채로 샐러드 만들어", a_jp: "やさいで サラダ つくる [야사이데 사라다 츠쿠루]" },
+            { q_ko: "샐러드는 무엇 만들어?", q_jp: "サラダは なに つくる [사라다와 나니 츠쿠루]", a_ko: "샐러드는 몸 만들어", a_jp: "サラダは からだ つくる [사라다와 카라다 츠쿠루]" },
+            { q_ko: "몸으로 무엇 만들어?", q_jp: "からだで なに つくる [카라다데 나니 츠쿠루]", a_ko: "몸으로 기록 만들어", a_jp: "からだで きろく つくる [카라다데 키로쿠 츠쿠루]" },
 
-       const standardSentences = [
-    // 1번 이미지 (흙 ~ 술)
-    { ko: "흙으로 무엇 만들어? / 흙으로 뱀 만들어", jp: "つちで なに つくる / つちで へび つくる" },
-    { ko: "뱀으로 무엇 만들어? / 뱀으로 항아리 만들어", jp: "へびで なに つくる / へびで つぼ つくる" },
-    { ko: "항아리로 무엇 만들어? / 항아리로 술 만들어", jp: "つぼで なに つくる / つぼで さけ つくる" },
-    { ko: "술은 무엇 만들어? / 술은 친구 만들어", jp: "さけは なに つくる / さけは ともだち つくる" },
+            // 7번 이미지 (성냥 ~ 군고구마)
+            { q_ko: "성냥으로 무엇 만들어?", q_jp: "マッチで なに つくる [맛치데 나니 츠쿠루]", a_ko: "성냥으로 불을 만들어", a_jp: "マッチで ひを つくる [맛치데 히오 츠쿠루]" },
+            { q_ko: "불로 무엇 만들어?", q_jp: "ひで なに つくる [히데 나니 츠쿠루]", a_ko: "불로 모닥불 만들어", a_jp: "ひで たきび つくる [히데 타키비 츠쿠루]" },
+            { q_ko: "모닥불로 무엇 만들어?", q_jp: "たきびで なに つくる [타키비데 나니 츠쿠루]", a_ko: "모닥불로 군고구마 만들어", a_jp: "たきびで やきいも つくる [타키비데 야키이모 츠쿠루]" },
+            { q_ko: "군고구마는 무엇 만들어?", q_jp: "やきいもは なに つくる [야키이모와 나니 츠쿠루]", a_ko: "군고구마는 방귀 만들어", a_jp: "やきいもは おなら つくる [야키이모와 오나라 츠쿠루]" },
 
-    // 2번 이미지 (염소 ~ 리듬)
-    { ko: "염소로 무엇 만들어? / 염소로 가죽 만들어", jp: "やぎで なに つくる / やぎで かわ つくる" },
-    { ko: "가죽으로 무엇 만들어? / 가죽으로 북 만들어", jp: "かわで なに つくる / かわで たいこ つくる" },
-    { ko: "북으로 무엇 만들어? / 북으로 리듬 만들어", jp: "たいこで なに つくる / たいこで リズム つくる" },
-    { ko: "리듬은 무엇 만들어? / 리듬은 축제 만들어", jp: "リズムは なに つくる / リズムは まつり つくる" },
+            // 8번 이미지 (나무 ~ 길)
+            { q_ko: "나무로 무엇 만들어?", q_jp: "きで なに つくる [키데 나니 츠쿠루]", a_ko: "나무로 통나무 만들어", a_jp: "きで まるた つくる [키데 마루타 츠쿠루]" },
+            { q_ko: "통나무로 무엇 만들어?", q_jp: "まるたで なに つくる [마루타데 나니 츠쿠루]", a_ko: "통나무로 다리 만들어", a_jp: "まるたで はし つくる [마루타데 하시 츠쿠루]" },
+            { q_ko: "다리로 무엇 만들어?", q_jp: "はしで なに つくる [하시데 나니 츠쿠루]", a_ko: "다리로 길 만들어", a_jp: "はしで みち つくる [하시데 미치 츠쿠루]" },
+            { q_ko: "길은 무엇 만들어?", q_jp: "みちは なに つくる [미치와 나니 츠쿠루]", a_ko: "길은 마을 만들어", a_jp: "みちは まち つくる [미치와 마치 츠쿠루]" },
 
-    // 3번 이미지 (솜 ~ 옷)
-    { ko: "솜으로 무엇 만들어? / 솜으로 실 만들어", jp: "わたで なに つくる / わたで いと つくる" },
-    { ko: "실로 무엇 만들어? / 실로 천 만들어", jp: "いとで なに つくる / いとで ぬの つくる" },
-    { ko: "천으로 무엇 만들어? / 천으로 옷 만들어", jp: "ぬので なに つくる / ぬので きもの つくる" },
-    { ko: "옷으로 무엇 만들어? / 옷으로 허수아비 만들어", jp: "きもので なに つくる / きもので かかし つくる" },
+            // 9번 이미지 (닭 ~ 닭꼬치)
+            { q_ko: "닭은 무엇 만들어?", q_jp: "にわとりは なに つくる [니와토리와 나니 츠쿠루]", a_ko: "닭은 계란 만들어", a_jp: "にわとりは たまご つくる [니와토리와 타마고 츠쿠루]" },
+            { q_ko: "계란은 무엇 만들어?", q_jp: "たまごは なに つくる [타마고와 나니 츠쿠루]", a_ko: "계란은 닭 만들어", a_jp: "たまごは にわとり つくる [타마고와 니와토리 츠쿠루]" },
+            { q_ko: "닭으로 무엇 만들어?", q_jp: "にわとりで なに つくる [니와토리데 나니 츠쿠루]", a_ko: "닭으로 닭꼬치 만들어", a_jp: "にわとりで やきとり つくる [니와토리데 야키토리 츠쿠루]" },
+            { q_ko: "닭꼬치는 무엇 만들어?", q_jp: "やきとりは なに つくる [야키토리와 나니 츠쿠루]", a_ko: "닭꼬치는 돈 만들어", a_jp: "やきとりは おかね つくる [야키토리와 오카네 츠쿠루]" },
 
-    // 4번 이미지 (돌 ~ 오린 것)
-    { ko: "돌로 무엇 만들어? / 돌로 철 만들어", jp: "いしで なに つくる / いしで てつ つくる" },
-    { ko: "철로 무엇 만들어? / 철로 가위 만들어", jp: "てつで なに つくる / てつで はさみ つくる" },
-    { ko: "가위로 무엇 만들어? / 가위로 오린 것 만들어", jp: "はさみで なに つくる / はさみで きりぬき つくる" },
-    { ko: "오린 것으로 무엇 만들어? / 오린 것으로 그림책 만들어", jp: "きりぬきで なに つくる / きりぬきで えほん つくる" },
+            // 10번 이미지 (사람 ~ 전쟁)
+            { q_ko: "사람으로 무엇 만들어?", q_jp: "ひとで なに つくる [히토데 나니 츠쿠루]", a_ko: "사람으로 병사 만들어", a_jp: "ひとで へいたい つくる [히토데 헤이타이 츠쿠루]" },
+            { q_ko: "병사로 무엇 만들어?", q_jp: "へいたいで なに つくる [헤이타이데 나니 츠쿠루]", a_ko: "병사로 군대 만들어", a_jp: "へいたいで ぐんたい つくる [헤이타이데 군타이 츠쿠루]" },
+            { q_ko: "군대는 무엇 만들어?", q_jp: "ぐんたいは なに つくる [군타이와 나니 츠쿠루]", a_ko: "군대는 전쟁 만들어", a_jp: "ぐんたいは せんそう つくる [군타이와 센소 츠쿠루]" },
+            { q_ko: "전쟁은 무엇 만들어?", q_jp: "せんそうは なに つくる？ [센소와 나니 츠쿠루]", a_ko: "", a_jp: "" }
+        ];
 
-    // 5번 이미지 (물 ~ 전기)
-    { ko: "물은 무엇 만들어? / 물은 강 만들어", jp: "みずは なに つくる / みずは かわ つくる" },
-    { ko: "강으로 무엇 만들어? / 강으로 댐 만들어", jp: "かわで なに つくる / かわで ダム つくる" },
-    { ko: "댐으로 무엇 만들어? / 댐으로 전기 만들어", jp: "ダムで なに つくる / ダムで でんき つくる" },
-    { ko: "전기가 무엇 만들어? / 전기가 빛 만들어", jp: "でんきが なに つくる / でんきが あかり つくる" },
-
-    // 6번 이미지 (햇님 ~ 몸)
-    { ko: "햇님은 무엇 만들어? / 햇님은 야채 만들어", jp: "おひさまは なに つくる / おひさまは やさい つくる" },
-    { ko: "야채로 무엇 만들어? / 야채로 샐러드 만들어", jp: "やさいで なに つくる / やさいで サラダ つくる" },
-    { ko: "샐러드는 무엇 만들어? / 샐러드는 몸 만들어", jp: "サラダは なに つくる / サラダは からだ つくる" },
-    { ko: "몸으로 무엇 만들어? / 몸으로 기록 만들어", jp: "からだで なに つくる / からだで きろく つくる" },
-
-    // 7번 이미지 (성냥 ~ 군고구마)
-    { ko: "성냥으로 무엇 만들어? / 성냥으로 불을 만들어", jp: "マッチで なに つくる / マッチで ひを つくる" },
-    { ko: "불로 무엇 만들어? / 불로 모닥불 만들어", jp: "ひで なに つくる / ひで たきび つくる" },
-    { ko: "모닥불로 무엇 만들어? / 모닥불로 군고구마 만들어", jp: "たきびで なに つくる / たきびで やきいも つくる" },
-    { ko: "군고구마는 무엇 만들어? / 군고구마는 방귀 만들어", jp: "やきいもは なに つくる / やきいもは おなら つくる" },
-
-    // 8번 이미지 (나무 ~ 길)
-    { ko: "나무로 무엇 만들어? / 나무로 통나무 만들어", jp: "きで なに つくる / きで まるた つくる" },
-    { ko: "통나무로 무엇 만들어? / 통나무로 다리 만들어", jp: "まるたで なに つくる / まるたで はし つくる" },
-    { ko: "다리로 무엇 만들어? / 다리로 길 만들어", jp: "はしで なに つくる / はしで みち つくる" },
-    { ko: "길은 무엇 만들어? / 길은 마을 만들어", jp: "みちは なに つくる / みちは まち つくる" },
-
-    // 9번 이미지 (닭 ~ 닭꼬치)
-    { ko: "닭은 무엇 만들어? / 닭은 계란 만들어", jp: "にわとりは なに つくる / にわとりは たまご つくる" },
-    { ko: "계란은 무엇 만들어? / 계란은 닭 만들어", jp: "たまごは なに つくる / たまごは にわとり つくる" },
-    { ko: "닭으로 무엇 만들어? / 닭으로 닭꼬치 만들어", jp: "にわとりで なに つくる / にわとりで やきとり つくる" },
-    { ko: "닭꼬치는 무엇 만들어? / 닭꼬치는 돈 만들어", jp: "やきとりは なに つくる / やきとりは おかね つくる" },
-
-    // 10번 이미지 (사람 ~ 전쟁)
-    { ko: "사람으로 무엇 만들어? / 사람으로 병사 만들어", jp: "ひとで なに つくる / ひとで へいたい つくる" },
-    { ko: "병사로 무엇 만들어? / 병사로 군대 만들어", jp: "へいたいで なに つくる / へいたいで ぐんたい つくる" },
-    { ko: "군대는 무엇 만들어? / 군대는 전쟁 만들어", jp: "ぐんたいは なに つくる / ぐんたいは せんそう つくる" },
-    { ko: "전쟁은 무엇 만들어?", jp: "せんそうは なに つくる？" }
-];
-
-        // 🔊 일본어 음성 재생 함수 (TTS)
+        // 🔊 일본어 음성 재생 함수 (TTS) - 대괄호 [발음] 부분 자동 제거 후 일본어만 재생
         const speakJapanese = (text) => {
-            if (!('speechSynthesis' in window)) {
-                return;
-            }
-            window.speechSynthesis.cancel(); // 이전 재생 중인 음성 멈춤
+            if (!('speechSynthesis' in window) || !text) return;
+            window.speechSynthesis.cancel(); 
 
-            // 발음 안내 괄호 [츠쿠루] 부분을 제외하고 순수 일본어 문자만 추출
-            const cleanText = text.split('[')[0].trim();
+            // [발음] 괄호 내용 전체 제거
+            const cleanText = text.replace(/\[[^\]]*\]/g, '').trim();
             const utterance = new SpeechSynthesisUtterance(cleanText);
             utterance.lang = 'ja-JP';
-            utterance.rate = 0.85; // 학습용 또박또박한 속도
+            utterance.rate = 0.85; 
             window.speechSynthesis.speak(utterance);
         };
 
@@ -211,13 +198,14 @@
             const [mode, setMode] = useState('words');
             const [flippedState, setFlippedState] = useState({});
 
-            const toggleFlip = (idx, jpText) => {
+            const toggleFlip = (idx, item) => {
                 const nextState = !flippedState[idx];
                 setFlippedState({ ...flippedState, [idx]: nextState });
                 
-                // 한국어 카드 터치 시 뒤집히며 일본어 음성 자동 재생
+                // 뒤집을 때 일본어 음성 자동 재생
                 if (nextState) {
-                    speakJapanese(jpText);
+                    const fullJp = mode === 'words' ? item.jp : `${item.q_jp} ${item.a_jp || ''}`;
+                    speakJapanese(fullJp);
                 }
             };
 
@@ -238,22 +226,55 @@
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 overflow-y-auto max-h-[60vh] p-1">
                         {getList().map((item, idx) => (
-                            <div key={idx} className={`flip-card h-36 ${flippedState[idx] ? 'flipped' : ''}`} onClick={() => toggleFlip(idx, item.jp)}>
+                            <div key={idx} className={`flip-card h-48 ${flippedState[idx] ? 'flipped' : ''}`} onClick={() => toggleFlip(idx, item)}>
                                 <div className="flip-card-inner shadow-sm rounded-xl border bg-white">
-                                    {/* 앞면: 한국어 뜻만 깔끔하게 표시 */}
-                                    <div className="flip-card-front flex items-center justify-center p-4 font-bold text-gray-800 text-xl rounded-xl bg-white border">
-                                        {item.ko}
+                                    {/* 앞면: 한국어 (질문/답변 분리) */}
+                                    <div className="flip-card-front flex flex-col justify-center p-4 font-bold text-gray-800 rounded-xl bg-white border">
+                                        {mode === 'words' ? (
+                                            <span className="text-xl text-center">{item.ko}</span>
+                                        ) : (
+                                            <div className="text-left w-full space-y-2">
+                                                <div className="flex items-start gap-2">
+                                                    <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded font-black mt-0.5 shrink-0">Q</span>
+                                                    <p className="text-base font-bold text-gray-800">{item.q_ko}</p>
+                                                </div>
+                                                {item.a_ko && (
+                                                    <div className="flex items-start gap-2 border-t pt-2 border-gray-100">
+                                                        <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded font-black mt-0.5 shrink-0">A</span>
+                                                        <p className="text-base font-bold text-gray-700">{item.a_ko}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                     </div>
                                     
-                                    {/* 뒷면: 일본어 표기 + 발음 + 음성 재생 버튼 */}
-                                    <div className="flip-card-back flex flex-col items-center justify-center p-4 font-bold bg-indigo-50 rounded-xl border border-indigo-200">
-                                        <p className="text-indigo-700 japanese-font text-lg mb-2">{item.jp}</p>
+                                    {/* 뒷면: 일본어 표기 + [발음] (질문/답변 분리) */}
+                                    <div className="flip-card-back flex flex-col items-center justify-between p-4 font-bold bg-indigo-50 rounded-xl border border-indigo-200">
+                                        {mode === 'words' ? (
+                                            <div className="flex-1 flex items-center justify-center">
+                                                <p className="text-indigo-700 japanese-font text-lg">{item.jp}</p>
+                                            </div>
+                                        ) : (
+                                            <div className="text-left w-full space-y-2 flex-1 flex flex-col justify-center">
+                                                <div className="flex items-start gap-2">
+                                                    <span className="bg-indigo-200 text-indigo-800 text-xs px-1.5 py-0.5 rounded font-black mt-0.5 shrink-0">Q</span>
+                                                    <p className="text-sm font-bold text-indigo-900 japanese-font">{item.q_jp}</p>
+                                                </div>
+                                                {item.a_jp && (
+                                                    <div className="flex items-start gap-2 border-t pt-2 border-indigo-100">
+                                                        <span className="bg-green-200 text-green-800 text-xs px-1.5 py-0.5 rounded font-black mt-0.5 shrink-0">A</span>
+                                                        <p className="text-sm font-bold text-indigo-800 japanese-font">{item.a_jp}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                         <button 
                                             onClick={(e) => {
-                                                e.stopPropagation(); // 카드 뒤집힘 방지
-                                                speakJapanese(item.jp);
+                                                e.stopPropagation();
+                                                const fullJp = mode === 'words' ? item.jp : `${item.q_jp} ${item.a_jp || ''}`;
+                                                speakJapanese(fullJp);
                                             }}
-                                            className="px-3 py-1 bg-indigo-600 text-white rounded-full text-xs font-bold shadow hover:bg-indigo-700 flex items-center gap-1.5"
+                                            className="mt-2 px-3 py-1 bg-indigo-600 text-white rounded-full text-xs font-bold shadow hover:bg-indigo-700 flex items-center gap-1.5"
                                         >
                                             <i className="fa-solid fa-volume-high"></i> 다시 듣기
                                         </button>
@@ -267,7 +288,7 @@
         }
 
         function StudentSubmitScreen({ setScreen, refreshData }) {
-            const [studentClass, setStudentClass] = useState('a1반');
+            const [studentClass, setStudentClass] = useState('a8반');
             const [studentId, setStudentId] = useState('');
             const [studentName, setStudentName] = useState('');
             const [sentences, setSentences] = useState([{ ko: '' }, { ko: '' }, { ko: '' }, { ko: '' }]);
@@ -369,7 +390,7 @@
         }
 
         function TeacherDashboardScreen({ setScreen, studentData, testScores, setSelectedStudent, setTestQuestions }) {
-            const [selectedClass, setSelectedClass] = useState('a1반');
+            const [selectedClass, setSelectedClass] = useState('a8반');
             const [activeTab, setActiveTab] = useState('status');
 
             const submittedKeys = Object.keys(studentData);
@@ -378,7 +399,11 @@
             const startTest = (studentKey) => {
                 setSelectedStudent(studentKey);
                 const storyQ = (studentData[studentKey] || []).map(s => ({ type: '창작', ko: s.ko, jp: '자유 회화 표현' }));
-                const stdQ = standardSentences.map(q => ({ type: '기본', ko: q.ko, jp: q.jp }));
+                const stdQ = standardSentences.map(q => {
+                    let koStr = q.a_ko ? `Q: ${q.q_ko}\nA: ${q.a_ko}` : `Q: ${q.q_ko}`;
+                    let jpStr = q.a_jp ? `Q: ${q.q_jp}\nA: ${q.a_jp}` : `Q: ${q.q_jp}`;
+                    return { type: '기본', ko: koStr, jp: jpStr };
+                });
                 setTestQuestions([...stdQ, ...storyQ]);
                 setScreen('test-run');
             };
@@ -439,7 +464,7 @@
                                             {(res.details || []).map((item, qIdx) => (
                                                 <div key={qIdx} className={`p-2.5 rounded-lg text-xs font-bold ${item.isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
                                                     <div className="flex justify-between">
-                                                        <span>문항 {qIdx+1}. {item.ko}</span>
+                                                        <span className="whitespace-pre-line">문항 {qIdx+1}.\n{item.ko}</span>
                                                         <span>{item.isCorrect ? 'O 정답' : 'X 오답'}</span>
                                                     </div>
                                                     {item.audioDataUrl && (
@@ -551,12 +576,12 @@
 
                     <div className="bg-white p-6 rounded-2xl border shadow-sm mb-6">
                         <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded">{current.type} 문항</span>
-                        <p className="text-2xl font-black text-gray-800 my-6">{current.ko}</p>
+                        <p className="text-2xl font-black text-gray-800 my-6 whitespace-pre-line text-left bg-gray-50 p-4 rounded-xl">{current.ko}</p>
 
                         <button onClick={() => setShowAnswer(!showAnswer)} className="text-xs text-indigo-600 font-bold underline mb-2">
                             {showAnswer ? '정답 숨기기' : '🔒 교사용 정답 확인'}
                         </button>
-                        {showAnswer && <p className="text-indigo-600 font-bold japanese-font text-lg">{current.jp}</p>}
+                        {showAnswer && <p className="text-indigo-600 font-bold japanese-font text-lg whitespace-pre-line text-left bg-indigo-50 p-4 rounded-xl border border-indigo-100">{current.jp}</p>}
                     </div>
 
                     <div className="bg-indigo-50 p-4 rounded-xl border mb-6 flex flex-col items-center gap-3">
@@ -613,7 +638,7 @@
                                 <div className="space-y-3 border-t pt-4">
                                     {(result.details || []).map((d, i) => (
                                         <div key={i} className="text-xs p-3 rounded-lg border bg-gray-50">
-                                            <p className="font-bold mb-1">{i+1}. {d.ko}</p>
+                                            <p className="font-bold mb-1 whitespace-pre-line">{i+1}. {d.ko}</p>
                                             <span className={d.isCorrect ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{d.isCorrect ? '정답' : '오답'}</span>
                                             {d.audioDataUrl && <audio controls src={d.audioDataUrl} className="w-full mt-2 h-7" />}
                                         </div>
