@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>일본어 회화 수행평가</title>
     
-    <!-- 순수 CSS 방식 Tailwind (학교 방화벽 우회용) -->
+    <!-- 순수 CSS 방식 Tailwind -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
     
     <!-- FontAwesome 아이콘 -->
@@ -34,9 +34,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // ⚠️ 구글 앱스 스크립트 배포 웹 앱 URL
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwvtqNgQOHNCqMXhnX8L_FOQyoIDKJJ6ubrjX0XZV5-ftzaPRVK_d784gkPyUBc2XIjRA/exec";
-
         const CLASS_OPTIONS = ['a8반', 'b7반', 'c6반', 'e1반'];
 
         const wordsData = [
@@ -93,7 +91,7 @@
         const standardSentences = [
             { q_ko: "흙으로 무엇 만들어?", q_jp: "つちで なに つくる [츠치데 나니 츠쿠루]", a_ko: "흙으로 뱀 만들어", a_jp: "つちで へび つくる [츠치데 헤비 츠쿠루]" },
             { q_ko: "뱀으로 무엇 만들어?", q_jp: "へびで なに つくる [헤비데 나니 츠쿠루]", a_ko: "뱀으로 항아리 만들어", a_jp: "へびで つぼ つくる [헤비데 츠보 츠쿠루]" },
-            { q_ko: "항아리로 무엇 만들어?", q_jp: "つぼで なに つくる [츠보데 나니 츠쿠루]", a_ko: "항아리로 술 만들어", a_jp: "つぼで さけ つくる [츠보데 사케 츠쿠루]" },
+            { q_ko: "항아리로 무엇 만들어?", q_jp: "つぼで なに つくる [츠보데 나니 츠쿠루]", a_ko: "항아리로 술 만들어", a_jp: "つぼで さけ つくる [츠보데 사け 츠쿠루]" },
             { q_ko: "술은 무엇 만들어?", q_jp: "さけは なに つくる [사케와 나니 츠쿠루]", a_ko: "술은 친구 만들어", a_jp: "さけは ともだち つくる [사케와 토모다치 츠쿠루]" },
             { q_ko: "염소로 무엇 만들어?", q_jp: "やぎで なに つくる [야기데 나니 츠쿠루]", a_ko: "염소로 가죽 만들어", a_jp: "やぎで かわ つくる [야기데 카와 츠쿠루]" },
             { q_ko: "가죽으로 무엇 만들어?", q_jp: "かわで なに つくる [카와데 나니 츠쿠루]", a_ko: "가죽으로 북 만들어", a_jp: "かわで たいこ つくる [카와데 타이코 츠쿠루]" },
@@ -105,12 +103,12 @@
             { q_ko: "옷으로 무엇 만들어?", q_jp: "きもので なに つくる [키모노데 나니 츠쿠루]", a_ko: "옷으로 허수아비 만들어", a_jp: "きもので かかし つくる [키모노데 카카시 츠쿠루]" },
             { q_ko: "돌로 무엇 만들어?", q_jp: "いしで なに つくる [이시데 나니 츠쿠루]", a_ko: "돌로 철 만들어", a_jp: "いしで てつ つくる [이시데 테츠 츠쿠루]" },
             { q_ko: "철로 무엇 만들어?", q_jp: "てつで なに つくる [테츠데 나니 츠쿠루]", a_ko: "철로 가위 만들어", a_jp: "てつで はさみ つくる [테츠데 하사미 츠쿠루]" },
-            { q_ko: "가위로 무엇 만들어?", q_jp: "はさみで なに つくる [하사미데 나니 츠쿠루]", a_ko: "가위로 오린 것 만들어", a_jp: "はさみで きりぬき つくる [하사미데 키리ぬき 츠쿠루]" },
-            { q_ko: "오린 것으로 무엇 만들어?", q_jp: "きりぬきで なに つくる [키리ぬき데 나니 츠쿠루]", a_ko: "오린 것으로 그림책 만들어", a_jp: "きりぬきで えほん つくる [키리ぬき데 에혼 츠쿠루]" },
+            { q_ko: "가위로 무엇 만들어?", q_jp: "はさみで なに つくる [하사み데 나니 츠쿠루]", a_ko: "가위로 오린 것 만들어", a_jp: "はさみで きりぬき つくる [하사미데 키리누키 츠쿠루]" },
+            { q_ko: "오린 것으로 무엇 만들어?", q_jp: "きりぬきで なに つくる [키리누키데 나니 츠쿠루]", a_ko: "오린 것으로 그림책 만들어", a_jp: "きりぬきで えほん つくる [키리누키데 에혼 츠쿠루]" },
             { q_ko: "물은 무엇 만들어?", q_jp: "みずは なに つくる [미즈와 나니 츠쿠루]", a_ko: "물은 강 만들어", a_jp: "みずは かわ つくる [미즈와 카와 츠쿠루]" },
             { q_ko: "강으로 무엇 만들어?", q_jp: "かわで なに つくる [카와데 나니 츠쿠루]", a_ko: "강으로 댐 만들어", a_jp: "かわで ダム つくる [카와데 다무 츠쿠루]" },
             { q_ko: "댐으로 무엇 만들어?", q_jp: "ダムで なに つくる [다무데 나니 츠쿠루]", a_ko: "댐으로 전기 만들어", a_jp: "ダムで でんき つくる [다무데 덴키 츠쿠루]" },
-            { q_ko: "전기가 무엇 만들어?", q_jp: "でんきが なに つくる [덴키가 나니 츠쿠루]", a_ko: "전기가 빛 만들어", a_jp: "でんきが あかり つくる [덴키가 あかり 츠쿠루]" },
+            { q_ko: "전기가 무엇 만들어?", q_jp: "でんきが なに つくる [덴키가 나니 츠쿠루]", a_ko: "전기가 빛 만들어", a_jp: "でんきが あかり つくる [덴키가 아카리 츠쿠루]" },
             { q_ko: "햇님은 무엇 만들어?", q_jp: "おひさまは なに つくる [오히사마와 나니 츠쿠루]", a_ko: "햇님은 야채 만들어", a_jp: "おひさまは やさい つくる [오히사마와 야사이 츠쿠루]" },
             { q_ko: "야채로 무엇 만들어?", q_jp: "やさいで なに つくる [야사이데 나니 츠쿠루]", a_ko: "야채로 샐러드 만들어", a_jp: "やさいで サラダ つくる [야사이데 사라다 츠쿠루]" },
             { q_ko: "샐러드는 무엇 만들어?", q_jp: "サラダは なに つくる [사라다와 나니 츠쿠루]", a_ko: "샐러드는 몸 만들어", a_jp: "サラダは からだ つくる [사라다와 카라다 츠쿠루]" },
@@ -129,8 +127,7 @@
             { q_ko: "닭꼬치는 무엇 만들어?", q_jp: "やきとりは なに つくる [야키토리와 나니 츠쿠루]", a_ko: "닭꼬치는 돈 만들어", a_jp: "やきとりは おかね つくる [야키토리와 오카네 츠쿠루]" },
             { q_ko: "사람으로 무엇 만들어?", q_jp: "ひとで なに つくる [히토데 나니 츠쿠루]", a_ko: "사람으로 병사 만들어", a_jp: "ひとで へいたい つくる [히토데 헤이타이 츠쿠루]" },
             { q_ko: "병사로 무엇 만들어?", q_jp: "へいたいで なに つくる [헤이타이데 나니 츠쿠루]", a_ko: "병사로 군대 만들어", a_jp: "へいたいで ぐんたい つくる [헤이타이데 군타이 츠쿠루]" },
-            { q_ko: "군대는 무엇 만들어?", q_jp: "ぐんたいは なに つくる [군타이와 나니 츠쿠루]", a_ko: "군대는 전쟁 만들어", a_jp: "ぐんたいは せんそう つくる [군타이와 센소 츠쿠루]" },
-            { q_ko: "전쟁은 무엇 만들어?", q_jp: "せんそうは なに つくる？ [센소와 나니 츠쿠루]", a_ko: "", a_jp: "" }
+            { q_ko: "군대는 무엇 만들어?", q_jp: "ぐんたいは なに つくる [군타이와 나니 츠쿠루]", a_ko: "군대는 전쟁 만들어", a_jp: "ぐんたいは せんそう つくる [군타이와 센소 츠쿠루]" }
         ];
 
         const speakJapanese = (text) => {
@@ -161,7 +158,7 @@
                             <i className="fa-solid fa-pen mr-2"></i> 동화책 제출하기
                         </button>
                         <button onClick={() => { refreshData(); setScreen('student-result'); }} className="py-4 px-4 text-lg font-bold rounded-xl text-indigo-600 border border-indigo-200 bg-white hover:bg-gray-50">
-                            <i className="fa-solid fa-chart-bar mr-2"></i> 내 평가 결과 및 녹음 확인
+                            <i className="fa-solid fa-chart-bar mr-2"></i> 내 평가 확인 및 녹음 듣기
                         </button>
                         <div className="border-t border-gray-200 my-2"></div>
                         <button onClick={() => { refreshData(); setScreen('teacher-login'); }} className="py-4 px-4 text-lg font-bold rounded-xl text-white bg-gray-800 hover:bg-gray-900">
@@ -375,13 +372,28 @@
 
             const startTest = (studentKey) => {
                 setSelectedStudent(studentKey);
-                const storyQ = (studentData[studentKey] || []).map(s => ({ type: '창작', ko: s.ko, jp: '자유 회화 표현' }));
-                const stdQ = standardSentences.map(q => {
-                    let koStr = q.a_ko ? `Q: ${q.q_ko}\nA: ${q.a_ko}` : `Q: ${q.q_ko}`;
-                    let jpStr = q.a_jp ? `Q: ${q.q_jp}\nA: ${q.a_jp}` : `Q: ${q.q_jp}`;
-                    return { type: '기본', ko: koStr, jp: jpStr };
-                });
-                setTestQuestions([...stdQ, ...storyQ]);
+
+                // 1. 기본 동화책 문장 중 4셋트 무작위 선택
+                const shuffledStd = [...standardSentences].sort(() => 0.5 - Math.random());
+                const selectedStd = shuffledStd.slice(0, 4).map((q, idx) => ({
+                    type: `기본 동화 문장 ${idx + 1}`,
+                    q_ko: q.q_ko,
+                    a_ko: q.a_ko,
+                    q_jp: q.q_jp,
+                    a_jp: q.a_jp,
+                    ko: `질문: ${q.q_ko}\n답변: ${q.a_ko}`,
+                    jp: `[질문] ${q.q_jp}\n[답변] ${q.a_jp}`
+                }));
+
+                // 2. 학생이 직접 작성한 창작 동화 문장 4셋트
+                const storyQ = (studentData[studentKey] || []).slice(0, 4).map((s, idx) => ({
+                    type: `창작 동화 문장 ${idx + 1}`,
+                    ko: s.ko,
+                    jp: '학생 제출 문장에 맞춘 회화 표현'
+                }));
+
+                // 총 8셋트로 시험 구성
+                setTestQuestions([...selectedStd, ...storyQ]);
                 setScreen('test-run');
             };
 
@@ -415,11 +427,11 @@
                                         <div>
                                             <p className="font-bold text-gray-800">{stKey}</p>
                                             <span className={`text-xs px-2 py-0.5 rounded font-bold ${isEvaluated ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                {isEvaluated ? `채점완료 (${testScores[stKey].score}점)` : '채점 대기중'}
+                                                {isEvaluated ? `채점완료 (${testScores[stKey].score} / 8점)` : '채점 대기중 (8셋트)'}
                                             </span>
                                         </div>
                                         <button onClick={() => startTest(stKey)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm">
-                                            {isEvaluated ? '재평가' : '평가 시작'}
+                                            {isEvaluated ? '재평가' : '평가 시작 (총 8셋트)'}
                                         </button>
                                     </div>
                                 );
@@ -435,13 +447,13 @@
                                     <div key={idx} className="bg-white p-4 rounded-xl border">
                                         <div className="flex justify-between items-center mb-3">
                                             <h3 className="font-bold text-lg">{stKey}</h3>
-                                            <span className="text-xl font-black text-indigo-600">{res.score} / {res.details ? res.details.length : 0} 점</span>
+                                            <span className="text-xl font-black text-indigo-600">{res.score} / 8 점</span>
                                         </div>
                                         <div className="space-y-2 border-t pt-2">
                                             {(res.details || []).map((item, qIdx) => (
                                                 <div key={qIdx} className={`p-2.5 rounded-lg text-xs font-bold ${item.isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
                                                     <div className="flex justify-between">
-                                                        <span className="whitespace-pre-line">문항 {qIdx+1}.\n{item.ko}</span>
+                                                        <span className="whitespace-pre-line">셋트 {qIdx+1}.\n{item.ko}</span>
                                                         <span>{item.isCorrect ? 'O 정답' : 'X 오답'}</span>
                                                     </div>
                                                     {item.audioDataUrl && (
@@ -535,7 +547,7 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
-                        alert(`채점 완료! 구글 시트에 저장되었습니다. (최종 점수: ${nextScore}점)`);
+                        alert(`평가 완료! 구글 시트에 저장되었습니다. (최종 점수: ${nextScore} / 8점)`);
                     } catch(e) {
                         alert("구글 시트 저장 중 에러가 발생했습니다.");
                     }
@@ -548,17 +560,17 @@
                 <div className="max-w-lg mx-auto py-6 text-center">
                     <div className="flex justify-between items-center mb-4">
                         <span className="font-bold text-gray-600">{studentName} 평가 중</span>
-                        <span className="font-bold text-indigo-600">{idx + 1} / {testQuestions.length}</span>
+                        <span className="font-bold text-indigo-600">셋트 {idx + 1} / {testQuestions.length}</span>
                     </div>
 
                     <div className="bg-white p-6 rounded-2xl border shadow-sm mb-6">
-                        <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded">{current.type} 문항</span>
-                        <p className="text-2xl font-black text-gray-800 my-6 whitespace-pre-line text-left bg-gray-50 p-4 rounded-xl">{current.ko}</p>
+                        <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">{current.type}</span>
+                        <p className="text-xl font-black text-gray-800 my-6 whitespace-pre-line text-left bg-gray-50 p-4 rounded-xl leading-relaxed">{current.ko}</p>
 
                         <button onClick={() => setShowAnswer(!showAnswer)} className="text-xs text-indigo-600 font-bold underline mb-2">
-                            {showAnswer ? '정답 숨기기' : '🔒 교사용 정답 확인'}
+                            {showAnswer ? '정답 숨기기' : '🔒 교사용 정답 및 발음 확인'}
                         </button>
-                        {showAnswer && <p className="text-indigo-600 font-bold japanese-font text-lg whitespace-pre-line text-left bg-indigo-50 p-4 rounded-xl border border-indigo-100">{current.jp}</p>}
+                        {showAnswer && <p className="text-indigo-600 font-bold japanese-font text-base whitespace-pre-line text-left bg-indigo-50 p-4 rounded-xl border border-indigo-100">{current.jp}</p>}
                     </div>
 
                     <div className="bg-indigo-50 p-4 rounded-xl border mb-6 flex flex-col items-center gap-3">
@@ -585,6 +597,7 @@
             );
         }
 
+        // 🔒 학생 결과 조회 화면 (점수 비공개 반영)
         function StudentResultScreen({ setScreen, testScores }) {
             const [searchQuery, setSearchQuery] = useState('');
             const [result, setResult] = useState(null);
@@ -600,7 +613,7 @@
             return (
                 <div className="max-w-md mx-auto py-6">
                     <button onClick={() => setScreen('home')} className="text-gray-600 font-bold mb-4"><i className="fa-solid fa-arrow-left"></i> 홈으로</button>
-                    <h2 className="text-2xl font-bold mb-6 text-center">내 결과 & 녹음 확인</h2>
+                    <h2 className="text-2xl font-bold mb-6 text-center">내 제출 및 녹음 확인</h2>
 
                     <form onSubmit={handleSearch} className="flex gap-2 mb-6">
                         <input type="text" placeholder="이름 또는 학번 입력" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 border p-3 rounded-xl font-bold" />
@@ -610,20 +623,31 @@
                     {searched && (
                         result ? (
                             <div className="bg-white p-6 rounded-xl border shadow-sm">
-                                <h3 className="font-bold text-center text-gray-700">{result.name}</h3>
-                                <p className="text-4xl font-black text-center text-indigo-600 my-4">{result.score} 점</p>
+                                <h3 className="font-bold text-center text-gray-800 text-lg mb-2">{result.name}</h3>
+                                
+                                <div className="my-4 text-center bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                                    <i className="fa-solid fa-circle-check text-3xl text-indigo-600 mb-2"></i>
+                                    <p className="text-base font-bold text-indigo-900">선생님 평가가 완료되었습니다</p>
+                                    <p className="text-xs text-gray-500 mt-1">※ 수행평가 세부 점수는 비공개입니다.</p>
+                                </div>
+
                                 <div className="space-y-3 border-t pt-4">
+                                    <p className="text-xs font-bold text-gray-500 mb-2">제출 및 평가 내역 (총 8셋트)</p>
                                     {(result.details || []).map((d, i) => (
                                         <div key={i} className="text-xs p-3 rounded-lg border bg-gray-50">
-                                            <p className="font-bold mb-1 whitespace-pre-line">{i+1}. {d.ko}</p>
-                                            <span className={d.isCorrect ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>{d.isCorrect ? '정답' : '오답'}</span>
-                                            {d.audioDataUrl && <audio controls src={d.audioDataUrl} className="w-full mt-2 h-7" />}
+                                            <p className="font-bold mb-1 whitespace-pre-line text-gray-800">셋트 {i+1}. {d.ko}</p>
+                                            {d.audioDataUrl && (
+                                                <div className="mt-2">
+                                                    <p className="text-[10px] text-gray-400 font-bold mb-0.5">내 녹음 음성:</p>
+                                                    <audio controls src={d.audioDataUrl} className="w-full h-7" />
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         ) : (
-                            <p className="text-center font-bold text-red-500 my-8">채점 결과가 존재하지 않습니다.</p>
+                            <p className="text-center font-bold text-red-500 my-8">채점 결과가 존재하지 않거나 아직 평가 전입니다.</p>
                         )
                     )}
                 </div>
