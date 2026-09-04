@@ -90,7 +90,6 @@
             { ko: "전쟁", jp: "せんそう [센소]" }
         ];
 
-        // 3번 구조 반영: 질문(q)과 답변(a)을 분리 + 발음 [괄호] 추가
         const standardSentences = [
             // 1번 이미지 (흙 ~ 술)
             { q_ko: "흙으로 무엇 만들어?", q_jp: "つちで なに つくる [츠치데 나니 츠쿠루]", a_ko: "흙으로 뱀 만들어", a_jp: "つちで へび つくる [츠치데 헤비 츠쿠루]" },
@@ -153,12 +152,10 @@
             { q_ko: "전쟁은 무엇 만들어?", q_jp: "せんそうは なに つくる？ [센소와 나니 츠쿠루]", a_ko: "", a_jp: "" }
         ];
 
-        // 🔊 일본어 음성 재생 함수 (TTS) - 대괄호 [발음] 부분 자동 제거 후 일본어만 재생
         const speakJapanese = (text) => {
             if (!('speechSynthesis' in window) || !text) return;
             window.speechSynthesis.cancel(); 
 
-            // [발음] 괄호 내용 전체 제거
             const cleanText = text.replace(/\[[^\]]*\]/g, '').trim();
             const utterance = new SpeechSynthesisUtterance(cleanText);
             utterance.lang = 'ja-JP';
@@ -202,7 +199,6 @@
                 const nextState = !flippedState[idx];
                 setFlippedState({ ...flippedState, [idx]: nextState });
                 
-                // 뒤집을 때 일본어 음성 자동 재생
                 if (nextState) {
                     const fullJp = mode === 'words' ? item.jp : `${item.q_jp} ${item.a_jp || ''}`;
                     speakJapanese(fullJp);
@@ -228,7 +224,6 @@
                         {getList().map((item, idx) => (
                             <div key={idx} className={`flip-card h-48 ${flippedState[idx] ? 'flipped' : ''}`} onClick={() => toggleFlip(idx, item)}>
                                 <div className="flip-card-inner shadow-sm rounded-xl border bg-white">
-                                    {/* 앞면: 한국어 (질문/답변 분리) */}
                                     <div className="flip-card-front flex flex-col justify-center p-4 font-bold text-gray-800 rounded-xl bg-white border">
                                         {mode === 'words' ? (
                                             <span className="text-xl text-center">{item.ko}</span>
@@ -248,7 +243,6 @@
                                         )}
                                     </div>
                                     
-                                    {/* 뒷면: 일본어 표기 + [발음] (질문/답변 분리) */}
                                     <div className="flip-card-back flex flex-col items-center justify-between p-4 font-bold bg-indigo-50 rounded-xl border border-indigo-200">
                                         {mode === 'words' ? (
                                             <div className="flex-1 flex items-center justify-center">
@@ -348,13 +342,15 @@
                         <div className="flex flex-col gap-3 mt-2">
                             <label className="text-sm font-bold text-gray-700">창작 동화 문장 4개 (한국어)</label>
                             {sentences.map((s, idx) => (
-                                <input key={idx} type="text" placeholder={`문장 ${idx + 1}`} value={s.ko} 
+                                <input key={idx} type="text" 
+                                    placeholder={`문장 ${idx + 1} - 예시) ○○로/는/가 무엇 만들어? - ○○로/는/가 ☆☆ 만들어`} 
+                                    value={s.ko} 
                                     onChange={e => {
                                         const newS = [...sentences];
                                         newS[idx].ko = e.target.value;
                                         setSentences(newS);
                                     }} 
-                                    className="border rounded-lg p-2.5 text-sm"
+                                    className="border rounded-lg p-2.5 text-xs font-medium placeholder-gray-400"
                                 />
                             ))}
                         </div>
