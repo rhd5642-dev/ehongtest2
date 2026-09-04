@@ -91,7 +91,7 @@
         const standardSentences = [
             { q_ko: "흙으로 무엇 만들어?", q_jp: "つちで なに つくる [츠치데 나니 츠쿠루]", a_ko: "흙으로 뱀 만들어", a_jp: "つちで へび つくる [츠치데 헤비 츠쿠루]" },
             { q_ko: "뱀으로 무엇 만들어?", q_jp: "へびで なに つくる [헤비데 나니 츠쿠루]", a_ko: "뱀으로 항아리 만들어", a_jp: "へびで つぼ つくる [헤비데 츠보 츠쿠루]" },
-            { q_ko: "항아리로 무엇 만들어?", q_jp: "つぼで なに つくる [츠보데 나니 츠쿠루]", a_ko: "항아리로 술 만들어", a_jp: "つぼで さけ つくる [츠보데 사け 츠쿠루]" },
+            { q_ko: "항아리로 무엇 만들어?", q_jp: "つぼで なに つくる [츠보데 나니 츠쿠루]", a_ko: "항아리로 술 만들어", a_jp: "つぼで さけ つくる [츠ぼ데 사케 츠쿠루]" },
             { q_ko: "술은 무엇 만들어?", q_jp: "さけは なに つくる [사케와 나니 츠쿠루]", a_ko: "술은 친구 만들어", a_jp: "さけは ともだち つくる [사케와 토모다치 츠쿠루]" },
             { q_ko: "염소로 무엇 만들어?", q_jp: "やぎで なに つくる [야기데 나니 츠쿠루]", a_ko: "염소로 가죽 만들어", a_jp: "やぎで かわ つくる [야기데 카와 츠쿠루]" },
             { q_ko: "가죽으로 무엇 만들어?", q_jp: "かわで なに つくる [카와데 나니 츠쿠루]", a_ko: "가죽으로 북 만들어", a_jp: "かわで たいこ つくる [카와데 타이코 츠쿠루]" },
@@ -449,10 +449,18 @@
                                         <div className="space-y-2 border-t pt-2">
                                             {(res.details || []).map((item, qIdx) => (
                                                 <div key={qIdx} className={`p-2.5 rounded-lg text-xs font-bold ${item.isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
-                                                    <div className="flex justify-between">
-                                                        <span className="whitespace-pre-line">셋트 {qIdx+1}.\n{item.ko}</span>
-                                                        <span>{item.isCorrect ? 'O 정답' : 'X 오답'}</span>
+                                                    <div className="flex justify-between items-start">
+                                                        <span className="whitespace-pre-line leading-relaxed">셋트 {qIdx+1}.\n{item.ko}</span>
+                                                        <span className="shrink-0 ml-2">{item.isCorrect ? 'O 정답' : 'X 오답'}</span>
                                                     </div>
+                                                    {item.wrongWords && item.wrongWords.length > 0 && (
+                                                        <div className="mt-2 pt-2 border-t border-red-200 text-red-600 flex items-center gap-1.5 flex-wrap">
+                                                            <span className="bg-red-200 text-red-800 px-1.5 py-0.5 rounded text-[10px] font-black">틀린 단어</span>
+                                                            {item.wrongWords.map((w, wI) => (
+                                                                <span key={wI} className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded line-through">{w}</span>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                     {item.audioDataUrl && (
                                                         <audio controls src={item.audioDataUrl} className="w-full mt-2 h-7" />
                                                     )}
@@ -476,11 +484,20 @@
             const [audioUrl, setAudioUrl] = useState(null);
             const [audioBase64, setAudioBase64] = useState(null);
             const [testDetails, setTestDetails] = useState([]);
+            const [wrongWordIndices, setWrongWordIndices] = useState([]);
 
             const mediaRecorderRef = useRef(null);
             const audioChunksRef = useRef([]);
 
             const current = testQuestions[idx];
+
+            const toggleWord = (wordIdx) => {
+                if (wrongWordIndices.includes(wordIdx)) {
+                    setWrongWordIndices(wrongWordIndices.filter(i => i !== wordIdx));
+                } else {
+                    setWrongWordIndices([...wrongWordIndices, wordIdx]);
+                }
+            };
 
             const startRecording = async () => {
                 try {
@@ -513,10 +530,14 @@
             };
 
             const handleMark = async (isCorrect) => {
+                const words = current.ko ? current.ko.split(/\s+/) : [];
+                const markedWrongWords = wrongWordIndices.map(i => words[i]);
+
                 const currentRecord = {
                     ko: current.ko,
                     jp: current.jp,
                     isCorrect: isCorrect,
+                    wrongWords: markedWrongWords,
                     audioDataUrl: audioBase64
                 };
                 const updatedDetails = [...testDetails, currentRecord];
@@ -528,6 +549,7 @@
                 setAudioUrl(null);
                 setAudioBase64(null);
                 setShowAnswer(false);
+                setWrongWordIndices([]);
 
                 if (idx < testQuestions.length - 1) {
                     setIdx(idx + 1);
@@ -553,6 +575,8 @@
                 }
             };
 
+            const wordList = current.ko ? current.ko.split(/\s+/) : [];
+
             return (
                 <div className="max-w-lg mx-auto py-6 text-center">
                     <div className="flex justify-between items-center mb-4">
@@ -562,9 +586,32 @@
 
                     <div className="bg-white p-6 rounded-2xl border shadow-sm mb-6">
                         <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">{current.type}</span>
-                        <p className="text-xl font-black text-gray-800 my-6 whitespace-pre-line text-left bg-gray-50 p-4 rounded-xl leading-relaxed">{current.ko}</p>
+                        
+                        <p className="text-xs text-gray-400 font-bold mt-4 mb-2 text-left">
+                            💡 틀린 단어를 클릭하면 빨간색 취소선으로 표시됩니다.
+                        </p>
 
-                        <button onClick={() => setShowAnswer(!showAnswer)} className="text-xs text-indigo-600 font-bold underline mb-2">
+                        <div className="flex flex-wrap gap-2 my-2 text-left bg-gray-50 p-4 rounded-xl leading-relaxed">
+                            {wordList.map((word, wIdx) => {
+                                const isWrong = wrongWordIndices.includes(wIdx);
+                                return (
+                                    <button
+                                        key={wIdx}
+                                        type="button"
+                                        onClick={() => toggleWord(wIdx)}
+                                        className={`px-3 py-1.5 rounded-lg font-bold text-base border transition-all cursor-pointer ${
+                                            isWrong
+                                                ? 'bg-red-500 text-white border-red-600 line-through shadow-inner'
+                                                : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100 shadow-sm'
+                                        }`}
+                                    >
+                                        {word}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button onClick={() => setShowAnswer(!showAnswer)} className="text-xs text-indigo-600 font-bold underline mb-2 mt-4">
                             {showAnswer ? '정답 숨기기' : '🔒 교사용 정답 및 발음 확인'}
                         </button>
                         {showAnswer && <p className="text-indigo-600 font-bold japanese-font text-base whitespace-pre-line text-left bg-indigo-50 p-4 rounded-xl border border-indigo-100">{current.jp}</p>}
