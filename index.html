@@ -104,7 +104,7 @@
             { q_ko: "돌로 무엇 만들어?", q_jp: "いしで なに つくる [이시데 나니 츠쿠루]", a_ko: "돌로 철 만들어", a_jp: "いしで てつ つくる [이시데 테츠 츠쿠루]" },
             { q_ko: "철로 무엇 만들어?", q_jp: "てつで なに つくる [테츠데 나니 츠쿠루]", a_ko: "철로 가위 만들어", a_jp: "てつで はさみ つくる [테츠데 하사미 츠쿠루]" },
             { q_ko: "가위로 무엇 만들어?", q_jp: "はさみで なに つくる [하사み데 나니 츠쿠루]", a_ko: "가위로 오린 것 만들어", a_jp: "はさみで きりぬき つくる [하사미데 키리누키 츠쿠루]" },
-            { q_ko: "오린 것으로 무엇 만들어?", q_jp: "きりぬきで なに つくる [키리누키데 나니 츠쿠루]", a_ko: "오린 것으로 그림책 만들어", a_jp: "きりぬきで えほん つくる [키리누키데 에혼 츠쿠루]" },
+            { q_ko: "오린 것으로 무엇 만들어?", q_jp: "きりぬきで なに つくる [키리ぬき데 나니 츠쿠루]", a_ko: "오린 것으로 그림책 만들어", a_jp: "きりぬきで えほん つくる [키리누키데 에혼 츠쿠루]" },
             { q_ko: "물은 무엇 만들어?", q_jp: "みずは なに つくる [미즈와 나니 츠쿠루]", a_ko: "물은 강 만들어", a_jp: "みずは かわ つくる [미즈와 카와 츠쿠루]" },
             { q_ko: "강으로 무엇 만들어?", q_jp: "かわで なに つくる [카와데 나니 츠쿠루]", a_ko: "강으로 댐 만들어", a_jp: "かわで ダム つくる [카와데 다무 츠쿠루]" },
             { q_ko: "댐으로 무엇 만들어?", q_jp: "ダムで なに つくる [다무데 나니 츠쿠루]", a_ko: "댐으로 전기 만들어", a_jp: "ダムで でんき つくる [다무데 덴키 츠쿠루]" },
@@ -156,9 +156,6 @@
                         </button>
                         <button onClick={() => setScreen('student-submit')} className="py-4 px-4 text-lg font-bold rounded-xl text-indigo-700 bg-indigo-100 hover:bg-indigo-200">
                             <i className="fa-solid fa-pen mr-2"></i> 동화책 제출하기
-                        </button>
-                        <button onClick={() => { refreshData(); setScreen('student-result'); }} className="py-4 px-4 text-lg font-bold rounded-xl text-indigo-600 border border-indigo-200 bg-white hover:bg-gray-50">
-                            <i className="fa-solid fa-chart-bar mr-2"></i> 내 평가 확인 및 녹음 듣기
                         </button>
                         <div className="border-t border-gray-200 my-2"></div>
                         <button onClick={() => { refreshData(); setScreen('teacher-login'); }} className="py-4 px-4 text-lg font-bold rounded-xl text-white bg-gray-800 hover:bg-gray-900">
@@ -597,63 +594,6 @@
             );
         }
 
-        // 🔒 학생 결과 조회 화면 (점수 비공개 반영)
-        function StudentResultScreen({ setScreen, testScores }) {
-            const [searchQuery, setSearchQuery] = useState('');
-            const [result, setResult] = useState(null);
-            const [searched, setSearched] = useState(false);
-
-            const handleSearch = (e) => {
-                e.preventDefault();
-                setSearched(true);
-                const key = Object.keys(testScores).find(k => k.includes(searchQuery.trim()));
-                setResult(key ? { name: key, ...testScores[key] } : null);
-            };
-
-            return (
-                <div className="max-w-md mx-auto py-6">
-                    <button onClick={() => setScreen('home')} className="text-gray-600 font-bold mb-4"><i className="fa-solid fa-arrow-left"></i> 홈으로</button>
-                    <h2 className="text-2xl font-bold mb-6 text-center">내 제출 및 녹음 확인</h2>
-
-                    <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-                        <input type="text" placeholder="이름 또는 학번 입력" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 border p-3 rounded-xl font-bold" />
-                        <button type="submit" className="bg-indigo-600 text-white font-bold px-5 rounded-xl">조회</button>
-                    </form>
-
-                    {searched && (
-                        result ? (
-                            <div className="bg-white p-6 rounded-xl border shadow-sm">
-                                <h3 className="font-bold text-center text-gray-800 text-lg mb-2">{result.name}</h3>
-                                
-                                <div className="my-4 text-center bg-indigo-50 p-4 rounded-xl border border-indigo-100">
-                                    <i className="fa-solid fa-circle-check text-3xl text-indigo-600 mb-2"></i>
-                                    <p className="text-base font-bold text-indigo-900">선생님 평가가 완료되었습니다</p>
-                                    <p className="text-xs text-gray-500 mt-1">※ 수행평가 세부 점수는 비공개입니다.</p>
-                                </div>
-
-                                <div className="space-y-3 border-t pt-4">
-                                    <p className="text-xs font-bold text-gray-500 mb-2">제출 및 평가 내역 (총 8셋트)</p>
-                                    {(result.details || []).map((d, i) => (
-                                        <div key={i} className="text-xs p-3 rounded-lg border bg-gray-50">
-                                            <p className="font-bold mb-1 whitespace-pre-line text-gray-800">셋트 {i+1}. {d.ko}</p>
-                                            {d.audioDataUrl && (
-                                                <div className="mt-2">
-                                                    <p className="text-[10px] text-gray-400 font-bold mb-0.5">내 녹음 음성:</p>
-                                                    <audio controls src={d.audioDataUrl} className="w-full h-7" />
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : (
-                            <p className="text-center font-bold text-red-500 my-8">채점 결과가 존재하지 않거나 아직 평가 전입니다.</p>
-                        )
-                    )}
-                </div>
-            );
-        }
-
         function App() {
             const [screen, setScreen] = useState('home');
             const [studentData, setStudentData] = useState({});
@@ -685,7 +625,6 @@
                         {screen === 'home' && <HomeScreen setScreen={setScreen} refreshData={refreshData} isLoading={isLoading} />}
                         {screen === 'practice' && <PracticeScreen setScreen={setScreen} />}
                         {screen === 'student-submit' && <StudentSubmitScreen setScreen={setScreen} refreshData={refreshData} />}
-                        {screen === 'student-result' && <StudentResultScreen setScreen={setScreen} testScores={testScores} />}
                         {screen === 'teacher-login' && <TeacherLoginScreen setScreen={setScreen} />}
                         {screen === 'teacher-dashboard' && <TeacherDashboardScreen setScreen={setScreen} studentData={studentData} testScores={testScores} setSelectedStudent={setSelectedStudent} setTestQuestions={setTestQuestions} />}
                         {screen === 'test-run' && <TestRunScreen setScreen={setScreen} testQuestions={testQuestions} studentName={selectedStudent} refreshData={refreshData} />}
