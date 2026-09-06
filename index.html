@@ -111,7 +111,7 @@
             { q_ko: "물은 무엇 만들어?", q_jp: "みずは なに つくる [미즈와 나니 츠쿠루]", a_ko: "물은 강 만들어", a_jp: "みずは かわ つくる [미즈와 카와 츠쿠루]" },
             { q_ko: "강으로 무엇 만들어?", q_jp: "かわで なに つくる [카와데 나니 츠쿠루]", a_ko: "강으로 댐 만들어", a_jp: "かわで ダム つくる [카와데 다무 츠쿠루]" },
             { q_ko: "댐으로 무엇 만들어?", q_jp: "ダムで なに つくる [다무데 나니 츠쿠루]", a_ko: "댐으로 전기 만들어", a_jp: "ダムで でんき つくる [다무데 덴키 츠쿠루]" },
-            { q_ko: "전기가 무엇 만들어?", q_jp: "でんきが なに つくる [덴키가 나니 츠쿠루]", a_ko: "전기가 빛 만들어", a_jp: "でんきが あかり つくる [덴키가 아카리 츠쿠루]" },
+            { q_ko: "전기가 무엇 만들어?", q_jp: "でんきが なに つくる [덴키가 나니 츠쿠루]", a_ko: "전기가 빛 만들어", a_jp: "でんきが あかり つくる [덴키가 あかり 츠쿠루]" },
             { q_ko: "햇님은 무엇 만들어?", q_jp: "おひさまは なに つくる [오히사마와 나니 츠쿠루]", a_ko: "햇님은 야채 만들어", a_jp: "おひさまは やさい つくる [오히사마와 야사이 츠쿠루]" },
             { q_ko: "야채로 무엇 만들어?", q_jp: "やさいで なに つくる [야사이데 나니 츠쿠루]", a_ko: "야채로 샐러드 만들어", a_jp: "やさいで サラダ つくる [야사이데 사라다 츠쿠루]" },
             { q_ko: "샐러드는 무엇 만들어?", q_jp: "サラダは なに つくる [사라다와 나니 츠쿠루]", a_ko: "샐러드는 몸 만들어", a_jp: "サラダは からだ つくる [사라다와 카라다 츠쿠루]" },
@@ -594,7 +594,7 @@
                                 setIdx(newIdx);
                                 syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: newIdx });
                             }} 
-                            className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:opacity-30 text-gray-800 font-bold py-4 rounded-xl text-lg transition-all"
+                            className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:opacity-30 text-gray-800 font-bold py-4 rounded-xl text-lg transition-all flex items-center justify-center"
                         >
                             <i className="fa-solid fa-chevron-left mr-2"></i> 이전 문제
                         </button>
@@ -605,7 +605,7 @@
                                 setIdx(newIdx);
                                 syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: newIdx });
                             }} 
-                            className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-30 text-white font-bold py-4 rounded-xl text-lg shadow-md transition-all"
+                            className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-30 text-white font-bold py-4 rounded-xl text-lg shadow-md transition-all flex items-center justify-center"
                         >
                             다음 문제 <i className="fa-solid fa-chevron-right ml-2"></i>
                         </button>
