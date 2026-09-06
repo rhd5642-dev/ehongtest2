@@ -37,6 +37,9 @@
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwvtqNgQOHNCqMXhnX8L_FOQyoIDKJJ6ubrjX0XZV5-ftzaPRVK_d784gkPyUBc2XIjRA/exec";
         const CLASS_OPTIONS = ['a8반', 'b7반', 'c6반', 'e1반'];
 
+        // 탭 간 실시간 문제 동기화 채널
+        const syncChannel = new BroadcastChannel('japanese_test_sync');
+
         const wordsData = [
             { ko: "흙", jp: "つち [츠치]" },
             { ko: "뱀", jp: "へび [헤비]" },
@@ -115,7 +118,7 @@
             { q_ko: "몸으로 무엇 만들어?", q_jp: "からだで なに つくる [카라다데 나니 츠쿠루]", a_ko: "몸으로 기록 만들어", a_jp: "からだで きろく つくる [카라다데 키로쿠 츠쿠루]" },
             { q_ko: "성냥으로 무엇 만들어?", q_jp: "マッチで なに つくる [맛치데 나니 츠쿠루]", a_ko: "성냥으로 불을 만들어", a_jp: "マッチで ひを つくる [맛치데 히오 츠쿠루]" },
             { q_ko: "불로 무엇 만들어?", q_jp: "ひで なに つくる [히데 나니 츠쿠루]", a_ko: "불로 모닥불 만들어", a_jp: "ひで たきび つくる [히데 타키비 츠쿠루]" },
-            { q_ko: "모닥불로 무엇 만들어?", q_jp: "たきびで なに つくる [타키비데 나니 츠쿠루]", a_ko: "모닥불로 군고구마 만들어", a_jp: "たきびで やきいも つくる [타키비데 야키이모 츠쿠루]" },
+            { q_ko: "모닥불로 무엇 만들어?", q_jp: "たきびで なに つくる [타키비데 나니 츠쿠루]", a_ko: "모닥불로 군고구마 만들어", a_jp: "たきびで やきいも つくる [타키비데 야키いも 츠쿠루]" },
             { q_ko: "군고구마는 무엇 만들어?", q_jp: "やきいもは なに つくる [야키이모와 나니 츠쿠루]", a_ko: "군고구마는 방귀 만들어", a_jp: "やきいもは おなら つくる [야키이모와 오나라 츠쿠루]" },
             { q_ko: "나무로 무엇 만들어?", q_jp: "きで なに つくる [키데 나니 츠쿠루]", a_ko: "나무로 통나무 만들어", a_jp: "きで まるた つくる [키데 마루타 츠쿠루]" },
             { q_ko: "통나무로 무엇 만들어?", q_jp: "まるたで なに つくる [마루타데 나니 츠쿠루]", a_ko: "통나무로 다리 만들어", a_jp: "まるたで はし つくる [마루타데 하시 츠쿠루]" },
@@ -126,7 +129,7 @@
             { q_ko: "닭으로 무엇 만들어?", q_jp: "にわとりで なに つくる [니와토리데 나니 츠쿠루]", a_ko: "닭으로 닭꼬치 만들어", a_jp: "にわとりで やきとり つくる [니와토리데 야키토리 츠쿠루]" },
             { q_ko: "닭꼬치는 무엇 만들어?", q_jp: "やきとりは なに つくる [야키토리와 나니 츠쿠루]", a_ko: "닭꼬치는 돈 만들어", a_jp: "やきとりは おかね つくる [야키토리와 오카네 츠쿠루]" },
             { q_ko: "사람으로 무엇 만들어?", q_jp: "ひとで なに つくる [히토데 나니 츠쿠루]", a_ko: "사람으로 병사 만들어", a_jp: "ひとで へいたい つくる [히토데 헤이타이 츠쿠루]" },
-            { q_ko: "병사로 무엇 만들어?", q_jp: "へいたいで なに つくる [헤이타이데 나니 츠쿠루]", a_ko: "병사로 군대 만들어", a_jp: "へいたいで ぐんたい つくる [헤이타이데 군타이 츠쿠루]" },
+            { q_ko: "병사로 무엇 만들어?", q_jp: "へいたいで なに つくる [헤이타이데 나니 츠쿠루]", a_ko: "병사로 군대 만들어", a_jp: "へいたいで ぐんたい つくる [헤い타이데 군타이 츠쿠루]" },
             { q_ko: "군대는 무엇 만들어?", q_jp: "ぐんたいは なに つくる [군타이와 나니 츠쿠루]", a_ko: "군대는 전쟁 만들어", a_jp: "ぐんたいは せんそう つくる [군타이와 센소 츠쿠루]" }
         ];
 
@@ -367,10 +370,7 @@
             const submittedKeys = Object.keys(studentData);
             const classSubmitted = submittedKeys.filter(key => key.startsWith(selectedClass));
 
-            const startTest = (studentKey) => {
-                setSelectedStudent(studentKey);
-
-                // 1. 기본 동화책 문장 중 4셋트 무작위 선택
+            const generateQuestions = (studentKey) => {
                 const shuffledStd = [...standardSentences].sort(() => 0.5 - Math.random());
                 const selectedStd = shuffledStd.slice(0, 4).map((q, idx) => ({
                     type: `기본 동화 문장 ${idx + 1}`,
@@ -382,16 +382,27 @@
                     jp: `[질문] ${q.q_jp}\n[답변] ${q.a_jp}`
                 }));
 
-                // 2. 학생이 직접 작성한 창작 동화 문장 4셋트
                 const storyQ = (studentData[studentKey] || []).slice(0, 4).map((s, idx) => ({
                     type: `창작 동화 문장 ${idx + 1}`,
                     ko: s.ko,
                     jp: '학생 제출 문장에 맞춘 회화 표현'
                 }));
 
-                // 총 8셋트로 시험 구성
-                setTestQuestions([...selectedStd, ...storyQ]);
+                return [...selectedStd, ...storyQ];
+            };
+
+            const startTest = (studentKey) => {
+                setSelectedStudent(studentKey);
+                const qList = generateQuestions(studentKey);
+                setTestQuestions(qList);
                 setScreen('test-run');
+            };
+
+            const openStudentDisplay = (studentKey) => {
+                setSelectedStudent(studentKey);
+                const qList = generateQuestions(studentKey);
+                setTestQuestions(qList);
+                setScreen('student-display');
             };
 
             return (
@@ -420,16 +431,21 @@
                             {classSubmitted.length > 0 ? classSubmitted.map((stKey, idx) => {
                                 const isEvaluated = !!testScores[stKey];
                                 return (
-                                    <div key={idx} className="p-4 flex justify-between items-center">
+                                    <div key={idx} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                         <div>
                                             <p className="font-bold text-gray-800">{stKey}</p>
                                             <span className={`text-xs px-2 py-0.5 rounded font-bold ${isEvaluated ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                                                 {isEvaluated ? `채점완료 (${testScores[stKey].score} / 8점)` : '채점 대기중 (8셋트)'}
                                             </span>
                                         </div>
-                                        <button onClick={() => startTest(stKey)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold text-sm">
-                                            {isEvaluated ? '재평가' : '평가 시작 (총 8셋트)'}
-                                        </button>
+                                        <div className="flex gap-2 w-full sm:w-auto">
+                                            <button onClick={() => startTest(stKey)} className="flex-1 sm:flex-none bg-indigo-600 text-white px-3 py-2 rounded-lg font-bold text-xs shadow hover:bg-indigo-700">
+                                                {isEvaluated ? '재채점' : '평가 시작 (채점용)'}
+                                            </button>
+                                            <button onClick={() => openStudentDisplay(stKey)} className="flex-1 sm:flex-none bg-teal-600 text-white px-3 py-2 rounded-lg font-bold text-xs shadow hover:bg-teal-700">
+                                                📱 학생용 화면 (태블릿용)
+                                            </button>
+                                        </div>
                                     </div>
                                 );
                             }) : (
@@ -476,6 +492,83 @@
             );
         }
 
+        // --- 새로 추가된 component: 학생 전용 태블릿 제시 화면 ---
+        function StudentDisplayScreen({ setScreen, testQuestions, studentName }) {
+            const [idx, setIdx] = useState(0);
+
+            useEffect(() => {
+                const handleMessage = (event) => {
+                    if (event.data && event.data.type === 'CHANGE_QUESTION_INDEX') {
+                        setIdx(event.data.index);
+                    }
+                };
+                syncChannel.addEventListener('message', handleMessage);
+                return () => syncChannel.removeEventListener('message', handleMessage);
+            }, []);
+
+            const current = testQuestions[idx];
+
+            if (!current) {
+                return (
+                    <div className="py-12 text-center font-bold text-gray-500">
+                        질문을 불러오는 중입니다...
+                        <div className="mt-4">
+                            <button onClick={() => setScreen('teacher-dashboard')} className="bg-gray-200 px-4 py-2 rounded-lg text-sm">대시보드로 돌아가기</button>
+                        </div>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-2xl mx-auto py-6 flex flex-col justify-between min-h-[75vh]">
+                    <div className="flex justify-between items-center border-b pb-4 mb-4">
+                        <button onClick={() => setScreen('teacher-dashboard')} className="text-gray-500 font-bold text-sm">
+                            <i className="fa-solid fa-arrow-left mr-1"></i> 대시보드
+                        </button>
+                        <span className="font-extrabold text-teal-700 text-lg">{studentName} 질문 제시 화면</span>
+                        <span className="bg-teal-100 text-teal-800 font-black text-sm px-3 py-1 rounded-full">
+                            셋트 {idx + 1} / {testQuestions.length}
+                        </span>
+                    </div>
+
+                    <div className="my-auto py-12 px-6 bg-teal-50/60 rounded-3xl border-2 border-teal-100 text-center shadow-sm">
+                        <span className="text-xs font-bold bg-white text-teal-700 px-3 py-1 rounded-full border border-teal-200">
+                            {current.type}
+                        </span>
+                        
+                        <div className="mt-8 text-2xl sm:text-3xl font-black text-gray-800 leading-relaxed whitespace-pre-line">
+                            {current.ko}
+                        </div>
+                    </div>
+
+                    <div className="flex justify-between items-center gap-4 pt-6 border-t mt-4">
+                        <button 
+                            disabled={idx === 0} 
+                            onClick={() => {
+                                const newIdx = idx - 1;
+                                setIdx(newIdx);
+                                syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: newIdx });
+                            }} 
+                            className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:opacity-30 text-gray-800 font-bold py-4 rounded-xl text-lg transition-all"
+                        >
+                            <i className="fa-solid fa-chevron-left mr-2"></i> 이전 문제
+                        </button>
+                        <button 
+                            disabled={idx === testQuestions.length - 1} 
+                            onClick={() => {
+                                const newIdx = idx + 1;
+                                setIdx(newIdx);
+                                syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: newIdx });
+                            }} 
+                            className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-30 text-white font-bold py-4 rounded-xl text-lg shadow-md transition-all"
+                        >
+                            다음 문제 <i className="fa-solid fa-chevron-right ml-2"></i>
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
         function TestRunScreen({ setScreen, testQuestions, studentName, refreshData }) {
             const [idx, setIdx] = useState(0);
             const [score, setScore] = useState(0);
@@ -490,6 +583,12 @@
             const audioChunksRef = useRef([]);
 
             const current = testQuestions[idx];
+
+            // 문제 번호 변경 시 학생 태블릿 제시 화면과 자동 동기화
+            const changeQuestionIndex = (newIdx) => {
+                setIdx(newIdx);
+                syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: newIdx });
+            };
 
             const toggleWord = (wordIdx) => {
                 if (wrongWordIndices.includes(wordIdx)) {
@@ -552,7 +651,7 @@
                 setWrongWordIndices([]);
 
                 if (idx < testQuestions.length - 1) {
-                    setIdx(idx + 1);
+                    changeQuestionIndex(idx + 1);
                 } else {
                     const payload = {
                         action: 'saveScore',
@@ -580,7 +679,7 @@
             return (
                 <div className="max-w-lg mx-auto py-6 text-center">
                     <div className="flex justify-between items-center mb-4">
-                        <span className="font-bold text-gray-600">{studentName} 평가 중</span>
+                        <span className="font-bold text-gray-600">{studentName} 평가 중 (채점 전용)</span>
                         <span className="font-bold text-indigo-600">셋트 {idx + 1} / {testQuestions.length}</span>
                     </div>
 
@@ -675,6 +774,7 @@
                         {screen === 'teacher-login' && <TeacherLoginScreen setScreen={setScreen} />}
                         {screen === 'teacher-dashboard' && <TeacherDashboardScreen setScreen={setScreen} studentData={studentData} testScores={testScores} setSelectedStudent={setSelectedStudent} setTestQuestions={setTestQuestions} />}
                         {screen === 'test-run' && <TestRunScreen setScreen={setScreen} testQuestions={testQuestions} studentName={selectedStudent} refreshData={refreshData} />}
+                        {screen === 'student-display' && <StudentDisplayScreen setScreen={setScreen} testQuestions={testQuestions} studentName={selectedStudent} />}
                     </div>
                 </div>
             );
