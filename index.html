@@ -44,7 +44,6 @@
         // 단어 뒤 붙은 조사를 자동으로 분리하는 헬퍼 함수
         const splitTextWithParticles = (text) => {
             if (!text) return [];
-            // 주요 조사 패턴 (에서, 부터, 까지, 으로, 은, 는, 이, 가, 을, 를, 로, 에, 과, 와, 도, 만)
             const separated = text.replace(/([가-힣A-Za-z0-9]+)(에서|부터|까지|으로|은|는|이|가|을|를|로|에|과|와|도|만)(?=\s|[?.,!]|$)/g, '$1 $2');
             return separated.trim().split(/\s+/).filter(Boolean);
         };
@@ -560,7 +559,7 @@
 
         function StudentDisplayScreen({ setScreen, testQuestions, studentName }) {
             const [idx, setIdx] = useState(0);
-            const [timeLeft, setTimeLeft] = useState(30);
+            const [timeLeft, setTimeLeft] = useState(20);
 
             useEffect(() => {
                 const handleMessage = (event) => {
@@ -572,12 +571,12 @@
                 return () => syncChannel.removeEventListener('message', handleMessage);
             }, []);
 
-            // 문항 변경 시 30초 타이머 리셋
+            // 문항 변경 시 20초 타이머 리셋
             useEffect(() => {
-                setTimeLeft(30);
+                setTimeLeft(20);
             }, [idx]);
 
-            // 30초 카운트다운 & 0초 초과 시 자동 다음 문항 이동
+            // 20초 카운트다운 & 0초 초과 시 자동 다음 문항 이동
             useEffect(() => {
                 if (timeLeft <= 0) {
                     if (idx < testQuestions.length - 1) {
@@ -610,18 +609,20 @@
 
             return (
                 <div className="max-w-2xl mx-auto py-6 flex flex-col justify-between min-h-[75vh]">
-                    {/* 상단 바 (대시보드 / 학생이름 / 스톱워치 / 셋트 카운터) */}
+                    {/* 상단 바 (대시보드 / 학생이름 / 대형 20초 스톱워치 / 셋트 카운터) */}
                     <div className="flex justify-between items-center border-b pb-4 mb-4">
                         <button onClick={() => setScreen('teacher-dashboard')} className="text-gray-500 font-bold text-sm">
                             <i className="fa-solid fa-arrow-left mr-1"></i> 대시보드
                         </button>
                         <span className="font-extrabold text-teal-700 text-lg">{studentName} 질문 제시 화면</span>
                         <div className="flex items-center gap-2">
-                            {/* 30초 스톱워치 (5초 이하 남을 시 빨간색 깜빡임 경고) */}
-                            <span className={`px-3 py-1 rounded-full font-black text-sm flex items-center gap-1.5 transition-all ${
-                                timeLeft <= 5 ? 'bg-red-500 text-white animate-pulse' : 'bg-amber-100 text-amber-800 border border-amber-300'
+                            {/* 강조된 20초 대형 스톱워치 */}
+                            <span className={`px-4 py-1.5 rounded-full font-black flex items-center gap-1.5 transition-all border ${
+                                timeLeft <= 5 ? 'bg-red-500 text-white border-red-600 animate-pulse' : 'bg-amber-100 text-amber-900 border-amber-300'
                             }`}>
-                                <i className="fa-solid fa-stopwatch"></i> {timeLeft}초
+                                <i className="fa-solid fa-stopwatch text-xl"></i>
+                                <span className="text-3xl font-black leading-none">{timeLeft}</span>
+                                <span className="text-xs font-bold">초</span>
                             </span>
                             <span className="bg-teal-100 text-teal-800 font-black text-sm px-3 py-1 rounded-full">
                                 셋트 {idx + 1} / {testQuestions.length}
@@ -743,7 +744,6 @@
                     return;
                 }
 
-                // 단어와 조사 분리 함수 적용
                 const words = splitTextWithParticles(current.ko);
                 const markedWrongWords = wrongWordIndices.map(i => words[i]);
 
@@ -791,7 +791,6 @@
                 }
             };
 
-            // 단어와 조사 분리 함수 적용
             const wordList = splitTextWithParticles(current.ko);
 
             return (
