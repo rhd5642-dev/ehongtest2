@@ -94,7 +94,7 @@
         const standardSentences = [
             { q_ko: "흙으로 무엇 만들어?", q_jp: "つちで なに つくる [츠치데 나니 츠쿠루]", a_ko: "흙으로 뱀 만들어", a_jp: "つちで へび つくる [츠치데 헤비 츠쿠루]" },
             { q_ko: "뱀으로 무엇 만들어?", q_jp: "へびで なに つくる [헤비데 나니 츠쿠루]", a_ko: "뱀으로 항아리 만들어", a_jp: "へびで つぼ つくる [헤비데 츠보 츠쿠루]" },
-            { q_ko: "항아리로 무엇 만들어?", q_jp: "つぼで なに つくる [츠보데 나니 츠쿠루]", a_ko: "항아리로 술 만들어", a_jp: "つぼで さけ つくる [츠ぼ데 사케 츠쿠루]" },
+            { q_ko: "항아리로 무엇 만들어?", q_jp: "つぼで なに つくる [츠ぼ데 나니 츠쿠루]", a_ko: "항아리로 술 만들어", a_jp: "つぼで さけ つくる [츠ぼ데 사케 츠쿠루]" },
             { q_ko: "술은 무엇 만들어?", q_jp: "さけは なに つくる [사케와 나니 츠쿠루]", a_ko: "술은 친구 만들어", a_jp: "さけは ともだち つくる [사케와 토모다치 츠쿠루]" },
             { q_ko: "염소로 무엇 만들어?", q_jp: "やぎで なに つくる [야기데 나니 츠쿠루]", a_ko: "염소로 가죽 만들어", a_jp: "やぎで かわ つくる [야기데 카와 츠쿠루]" },
             { q_ko: "가죽으로 무엇 만들어?", q_jp: "かわで なに つくる [카와데 나니 츠쿠루]", a_ko: "가죽으로 북 만들어", a_jp: "かわで たいこ つくる [카와데 타이코 츠쿠루]" },
@@ -118,18 +118,18 @@
             { q_ko: "몸으로 무엇 만들어?", q_jp: "からだで なに つくる [카라다데 나니 츠쿠루]", a_ko: "몸으로 기록 만들어", a_jp: "からだで きろく つくる [카라다데 키로쿠 츠쿠루]" },
             { q_ko: "성냥으로 무엇 만들어?", q_jp: "マッチで なに つくる [맛치데 나니 츠쿠루]", a_ko: "성냥으로 불을 만들어", a_jp: "マッチで ひを つくる [맛치데 히오 츠쿠루]" },
             { q_ko: "불로 무엇 만들어?", q_jp: "ひで なに つくる [히데 나니 츠쿠루]", a_ko: "불로 모닥불 만들어", a_jp: "ひで たきび つくる [히데 타키비 츠쿠루]" },
-            { q_ko: "모닥불로 무엇 만들어?", q_jp: "たきびで なに つくる [타키비데 나니 츠쿠루]", a_ko: "모닥불로 군고구마 만들어", a_jp: "たきびで やきいも つくる [타키비데 야키いも 츠쿠루]" },
+            { q_ko: "모닥불로 무엇 만들어?", q_jp: "たきびで なに つくる [타키비데 나니 츠쿠루]", a_ko: "모닥불로 군고구마 만들어", a_jp: "たきびで やきいも つくる [타키び데 야키이모 츠쿠루]" },
             { q_ko: "군고구마는 무엇 만들어?", q_jp: "やきいもは なに つくる [야키이모와 나니 츠쿠루]", a_ko: "군고구마는 방귀 만들어", a_jp: "やきいもは おなら つくる [야키이모와 오나라 츠쿠루]" },
             { q_ko: "나무로 무엇 만들어?", q_jp: "きで なに つくる [키데 나니 츠쿠루]", a_ko: "나무로 통나무 만들어", a_jp: "きで まるた つくる [키데 마루타 츠쿠루]" },
             { q_ko: "통나무로 무엇 만들어?", q_jp: "まるたで なに つくる [마루타데 나니 츠쿠루]", a_ko: "통나무로 다리 만들어", a_jp: "まるたで はし つくる [마루타데 하시 츠쿠루]" },
             { q_ko: "다리로 무엇 만들어?", q_jp: "はしで なに つくる [하시데 나니 츠쿠루]", a_ko: "다리로 길 만들어", a_jp: "はしで みち つくる [하시데 미치 츠쿠루]" },
-            { q_ko: "길은 무엇 만들어?", q_jp: "みちは なに つくる [미치와 나니 츠쿠루]", a_ko: "길은 마을 만들어", a_jp: "みちは まち つくる [미ちは 마치 츠쿠루]" },
+            { q_ko: "길은 무엇 만들어?", q_jp: "みちは なに つくる [미치와 나니 츠쿠루]", a_ko: "길은 마을 만들어", a_jp: "みちは まち つくる [미치와 마치 츠쿠루]" },
             { q_ko: "닭은 무엇 만들어?", q_jp: "にわとりは なに つくる [니와토리와 나니 츠쿠루]", a_ko: "닭은 계란 만들어", a_jp: "にわとりは たまご つくる [니와토리와 타마고 츠쿠루]" },
-            { q_ko: "계란은 무엇 만들어?", q_jp: "たまごは なに つくる [타마고와 나니 츠쿠루]", a_ko: "계란은 닭 만들어", a_jp: "たまごは にわとり つくる [타마고와 니와토리 츠쿠루]" },
+            { q_ko: "계란은 무엇 만들어?", q_jp: "たまごは なに つくる [타마ゴ와 나니 츠쿠루]", a_ko: "계란은 닭 만들어", a_jp: "たまごは にわとり つくる [타마고와 니와토리 츠쿠루]" },
             { q_ko: "닭으로 무엇 만들어?", q_jp: "にわとりで なに つくる [니와토리데 나니 츠쿠루]", a_ko: "닭으로 닭꼬치 만들어", a_jp: "にわとりで やきとり つくる [니와토리데 야키토리 츠쿠루]" },
             { q_ko: "닭꼬치는 무엇 만들어?", q_jp: "やきとりは なに つくる [야키토리와 나니 츠쿠루]", a_ko: "닭꼬치는 돈 만들어", a_jp: "やきとりは おかね つくる [야키토리와 오카네 츠쿠루]" },
             { q_ko: "사람으로 무엇 만들어?", q_jp: "ひとで なに つくる [히토데 나니 츠쿠루]", a_ko: "사람으로 병사 만들어", a_jp: "ひとで へいたい つくる [히토데 헤이타이 츠쿠루]" },
-            { q_ko: "병사로 무엇 만들어?", q_jp: "へいたいで なに つくる [헤이타이데 나니 츠쿠루]", a_ko: "병사로 군대 만들어", a_jp: "へいたいで ぐんたい つくる [헤い타이데 군타이 츠쿠루]" },
+            { q_ko: "병사로 무엇 만들어?", q_jp: "へいたいで なに つくる [헤이타이데 나니 츠쿠루]", a_ko: "병사로 군대 만들어", a_jp: "へいたいで ぐんたい つくる [헤이타이데 군타이 츠쿠루]" },
             { q_ko: "군대는 무엇 만들어?", q_jp: "ぐんたいは なに つくる [군타이와 나니 츠쿠루]", a_ko: "군대는 전쟁 만들어", a_jp: "ぐんたいは せんそう つくる [군타이와 센소 츠쿠루]" }
         ];
 
@@ -366,9 +366,25 @@
         function TeacherDashboardScreen({ setScreen, studentData, testScores, setSelectedStudent, setTestQuestions }) {
             const [selectedClass, setSelectedClass] = useState('a8반');
             const [activeTab, setActiveTab] = useState('status');
+            const [searchTerm, setSearchTerm] = useState('');
 
-            const submittedKeys = Object.keys(studentData);
-            const classSubmitted = submittedKeys.filter(key => key.startsWith(selectedClass));
+            // 학번 순 자연어 정렬 (localeCompare numeric: true)
+            const sortedSubmittedKeys = Object.keys(studentData).sort((a, b) => 
+                a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+            );
+
+            // 반 및 검색어 필터링
+            const classSubmitted = sortedSubmittedKeys.filter(key => 
+                key.startsWith(selectedClass) &&
+                (searchTerm.trim() === '' || key.toLowerCase().includes(searchTerm.toLowerCase().trim()))
+            );
+
+            const sortedEvaluatedKeys = Object.keys(testScores)
+                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }))
+                .filter(key => 
+                    key.startsWith(selectedClass) &&
+                    (searchTerm.trim() === '' || key.toLowerCase().includes(searchTerm.toLowerCase().trim()))
+                );
 
             const generateQuestions = (studentKey) => {
                 const shuffledStd = [...standardSentences].sort(() => 0.5 - Math.random());
@@ -418,12 +434,29 @@
                         <button onClick={() => setActiveTab('results')} className={`flex-1 py-2 font-bold rounded-md ${activeTab === 'results' ? 'bg-white text-indigo-600 shadow' : 'text-gray-500'}`}>채점 결과 & 녹음 확인</button>
                     </div>
 
-                    <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
+                    <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
                         {CLASS_OPTIONS.map(c => (
                             <button key={c} onClick={() => setSelectedClass(c)} className={`px-4 py-1.5 rounded-full font-bold text-sm ${selectedClass === c ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
                                 {c}
                             </button>
                         ))}
+                    </div>
+
+                    {/* 학생 검색창 */}
+                    <div className="relative mb-4">
+                        <input 
+                            type="text" 
+                            placeholder="학번 또는 이름 검색..." 
+                            value={searchTerm} 
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-9 pr-8 py-2 border rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50"
+                        />
+                        <i className="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-xs"></i>
+                        {searchTerm && (
+                            <button onClick={() => setSearchTerm('')} className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 text-xs">
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        )}
                     </div>
 
                     {activeTab === 'status' ? (
@@ -442,33 +475,36 @@
                                             <button onClick={() => startTest(stKey)} className="flex-1 sm:flex-none bg-indigo-600 text-white px-3 py-2 rounded-lg font-bold text-xs shadow hover:bg-indigo-700">
                                                 {isEvaluated ? '재채점' : '평가 시작 (채점용)'}
                                             </button>
-                                            <button onClick={() => openStudentDisplay(stKey)} className="flex-1 sm:flex-none bg-teal-600 text-white px-3 py-2 rounded-lg font-bold text-xs shadow hover:bg-teal-700">
-                                                📱 학생용 화면 (태블릿용)
+                                            <button onClick={() => openStudentDisplay(stKey)} className="flex-1 sm:flex-none bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg font-bold text-xs shadow transition-all flex items-center justify-center gap-1.5 whitespace-nowrap">
+                                                📱 학생용 (태블릿)
                                             </button>
                                         </div>
                                     </div>
                                 );
                             }) : (
-                                <p className="p-8 text-center text-gray-400 font-bold">{selectedClass} 제출 학생이 없습니다.</p>
+                                <p className="p-8 text-center text-gray-400 font-bold">{selectedClass} 검색결과 또는 제출 학생이 없습니다.</p>
                             )}
                         </div>
                     ) : (
                         <div className="flex flex-col gap-4">
-                            {Object.keys(testScores).filter(k => k.startsWith(selectedClass)).map((stKey, idx) => {
+                            {sortedEvaluatedKeys.length > 0 ? sortedEvaluatedKeys.map((stKey, idx) => {
                                 const res = testScores[stKey];
                                 return (
-                                    <div key={idx} className="bg-white p-4 rounded-xl border">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <h3 className="font-bold text-lg">{stKey}</h3>
+                                    <div key={idx} className="bg-white p-4 rounded-xl border shadow-sm">
+                                        <div className="flex justify-between items-center mb-3 border-b pb-2">
+                                            <h3 className="font-bold text-lg text-gray-800">{stKey}</h3>
                                             <span className="text-xl font-black text-indigo-600">{res.score} / 8 점</span>
                                         </div>
-                                        <div className="space-y-2 border-t pt-2">
+                                        <div className="space-y-3">
                                             {(res.details || []).map((item, qIdx) => (
-                                                <div key={qIdx} className={`p-2.5 rounded-lg text-xs font-bold ${item.isCorrect ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
+                                                <div key={qIdx} className={`p-3 rounded-lg text-xs font-bold border ${item.isCorrect ? 'bg-green-50 border-green-200 text-green-900' : 'bg-red-50 border-red-200 text-red-900'}`}>
                                                     <div className="flex justify-between items-start">
-                                                        <span className="whitespace-pre-line leading-relaxed">셋트 {qIdx+1}.\n{item.ko}</span>
-                                                        <span className="shrink-0 ml-2">{item.isCorrect ? 'O 정답' : 'X 오답'}</span>
+                                                        <span className="whitespace-pre-line leading-relaxed text-sm">셋트 {qIdx+1}.\n{item.ko}</span>
+                                                        <span className={`shrink-0 ml-2 px-2 py-0.5 rounded text-[11px] font-black ${item.isCorrect ? 'bg-green-600 text-white' : 'bg-red-500 text-white'}`}>
+                                                            {item.isCorrect ? 'O 정답' : 'X 오답'}
+                                                        </span>
                                                     </div>
+
                                                     {item.wrongWords && item.wrongWords.length > 0 && (
                                                         <div className="mt-2 pt-2 border-t border-red-200 text-red-600 flex items-center gap-1.5 flex-wrap">
                                                             <span className="bg-red-200 text-red-800 px-1.5 py-0.5 rounded text-[10px] font-black">틀린 단어</span>
@@ -477,22 +513,31 @@
                                                             ))}
                                                         </div>
                                                     )}
-                                                    {item.audioDataUrl && (
-                                                        <audio controls src={item.audioDataUrl} className="w-full mt-2 h-7" />
+
+                                                    {item.audioDataUrl ? (
+                                                        <div className="mt-2 pt-2 border-t border-gray-200">
+                                                            <p className="text-[11px] text-indigo-700 font-bold mb-1 flex items-center gap-1">
+                                                                <i className="fa-solid fa-microphone text-indigo-500"></i> 녹음된 학생 발음 재생:
+                                                            </p>
+                                                            <audio controls src={item.audioDataUrl} className="w-full h-8 rounded" />
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-[10px] text-gray-400 mt-1 italic">🎙️ 녹음 데이터 없음</p>
                                                     )}
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                 );
-                            })}
+                            }) : (
+                                <p className="p-8 text-center text-gray-400 font-bold bg-white rounded-xl border">채점 결과가 없습니다.</p>
+                            )}
                         </div>
                     )}
                 </div>
             );
         }
 
-        // --- 새로 추가된 component: 학생 전용 태블릿 제시 화면 ---
         function StudentDisplayScreen({ setScreen, testQuestions, studentName }) {
             const [idx, setIdx] = useState(0);
 
@@ -578,13 +623,13 @@
             const [audioBase64, setAudioBase64] = useState(null);
             const [testDetails, setTestDetails] = useState([]);
             const [wrongWordIndices, setWrongWordIndices] = useState([]);
+            const [isMarking, setIsMarking] = useState(false);
 
             const mediaRecorderRef = useRef(null);
             const audioChunksRef = useRef([]);
 
             const current = testQuestions[idx];
 
-            // 문제 번호 변경 시 학생 태블릿 제시 화면과 자동 동기화
             const changeQuestionIndex = (newIdx) => {
                 setIdx(newIdx);
                 syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: newIdx });
@@ -629,6 +674,15 @@
             };
 
             const handleMark = async (isCorrect) => {
+                if (isMarking) return;
+                setIsMarking(true);
+
+                // 8문제 상한선 초과 중복 채점 방지
+                if (testDetails.length >= testQuestions.length) {
+                    setIsMarking(false);
+                    return;
+                }
+
                 const words = current.ko ? current.ko.split(/\s+/) : [];
                 const markedWrongWords = wrongWordIndices.map(i => words[i]);
 
@@ -650,9 +704,11 @@
                 setShowAnswer(false);
                 setWrongWordIndices([]);
 
-                if (idx < testQuestions.length - 1) {
-                    changeQuestionIndex(idx + 1);
+                if (updatedDetails.length < testQuestions.length) {
+                    changeQuestionIndex(updatedDetails.length);
+                    setTimeout(() => setIsMarking(false), 200);
                 } else {
+                    // 정확히 8문제 완료 시점
                     const payload = {
                         action: 'saveScore',
                         data: { studentName, score: nextScore, details: updatedDetails }
@@ -665,11 +721,12 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
-                        alert(`평가 완료! 구글 시트에 저장되었습니다. (최종 점수: ${nextScore} / 8점)`);
+                        alert(`평가 완료! 구글 시트에 저장되었습니다. (최종 점수: ${nextScore} / ${testQuestions.length}점)`);
                     } catch(e) {
                         alert("구글 시트 저장 중 에러가 발생했습니다.");
                     }
                     refreshData();
+                    setIsMarking(false);
                     setScreen('teacher-dashboard');
                 }
             };
@@ -733,8 +790,20 @@
                     </div>
 
                     <div className="flex gap-4">
-                        <button onClick={() => handleMark(false)} className="flex-1 bg-red-500 text-white font-bold py-5 rounded-xl text-2xl">X (오답)</button>
-                        <button onClick={() => handleMark(true)} className="flex-1 bg-green-500 text-white font-bold py-5 rounded-xl text-2xl">O (정답)</button>
+                        <button 
+                            onClick={() => handleMark(false)} 
+                            disabled={isMarking} 
+                            className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-bold py-5 rounded-xl text-2xl transition-all"
+                        >
+                            X (오답)
+                        </button>
+                        <button 
+                            onClick={() => handleMark(true)} 
+                            disabled={isMarking} 
+                            className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold py-5 rounded-xl text-2xl transition-all"
+                        >
+                            O (정답)
+                        </button>
                     </div>
                 </div>
             );
