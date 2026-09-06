@@ -34,6 +34,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        // 배포한 구글 앱스 스크립트(GAS) 웹 앱 URL을 입력하세요.
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwvtqNgQOHNCqMXhnX8L_FOQyoIDKJJ6ubrjX0XZV5-ftzaPRVK_d784gkPyUBc2XIjRA/exec";
         const CLASS_OPTIONS = ['a8반', 'b7반', 'c6반', 'e1반'];
 
@@ -64,7 +65,7 @@
             { ko: "물", jp: "みず [미즈]" },
             { ko: "강", jp: "かわ(川) [카와]" },
             { ko: "댐", jp: "ダム [다무]" },
-            { ko: "전기", jp: "でんき [덴키]" },
+            { ko: "전기", jp: "でんき [デン키]" },
             { ko: "빛, 등불", jp: "あかり [아카리]" },
             { ko: "해님", jp: "おひさま [오히사마]" },
             { ko: "채소", jp: "やさい [야사이]" },
@@ -123,7 +124,7 @@
             { q_ko: "나무로 무엇 만들어?", q_jp: "きで なに つくる [키데 나니 츠쿠루]", a_ko: "나무로 통나무 만들어", a_jp: "きで まるた つくる [키데 마루타 츠쿠루]" },
             { q_ko: "통나무로 무엇 만들어?", q_jp: "まるたで なに つくる [마루타데 나니 츠쿠루]", a_ko: "통나무로 다리 만들어", a_jp: "まるたで はし つくる [마루타데 하시 츠쿠루]" },
             { q_ko: "다리로 무엇 만들어?", q_jp: "はしで なに つくる [하시데 나니 츠쿠루]", a_ko: "다리로 길 만들어", a_jp: "はしで みち つくる [하시데 미치 츠쿠루]" },
-            { q_ko: "길은 무엇 만들어?", q_jp: "みちは なに つくる [미치와 나니 츠쿠루]", a_ko: "길은 마을 만들어", a_jp: "みちは まち つくる [미치와 마치 츠쿠루]" },
+            { q_ko: "길은 무엇 만들어?", q_jp: "みちは なに つくる [미치와 나니 츠쿠루]", a_ko: "길은 마을 만들어", a_jp: "みちは まち つくる [미ちは 마치 츠쿠루]" },
             { q_ko: "닭은 무엇 만들어?", q_jp: "にわとりは なに つくる [니와토리와 나니 츠쿠루]", a_ko: "닭은 계란 만들어", a_jp: "にわとりは たまご つくる [니와토리와 타마고 츠쿠루]" },
             { q_ko: "계란은 무엇 만들어?", q_jp: "たまごは なに つくる [타마ゴ와 나니 츠쿠루]", a_ko: "계란은 닭 만들어", a_jp: "たまごは にわとり つくる [타마고와 니와토리 츠쿠루]" },
             { q_ko: "닭으로 무엇 만들어?", q_jp: "にわとりで なに つくる [니와토리데 나니 츠쿠루]", a_ko: "닭으로 닭꼬치 만들어", a_jp: "にわとりで やきとり つくる [니와토리데 야키토리 츠쿠루]" },
@@ -368,12 +369,10 @@
             const [activeTab, setActiveTab] = useState('status');
             const [searchTerm, setSearchTerm] = useState('');
 
-            // 학번 순 자연어 정렬 (localeCompare numeric: true)
             const sortedSubmittedKeys = Object.keys(studentData).sort((a, b) => 
                 a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
             );
 
-            // 반 및 검색어 필터링
             const classSubmitted = sortedSubmittedKeys.filter(key => 
                 key.startsWith(selectedClass) &&
                 (searchTerm.trim() === '' || key.toLowerCase().includes(searchTerm.toLowerCase().trim()))
@@ -387,7 +386,21 @@
                 );
 
             const generateQuestions = (studentKey) => {
-                const shuffledStd = [...standardSentences].sort(() => 0.5 - Math.random());
+                let seed = 0;
+                for (let i = 0; i < studentKey.length; i++) {
+                    seed = studentKey.charCodeAt(i) + ((seed << 5) - seed);
+                }
+                
+                const seededRandom = () => {
+                    const x = Math.sin(seed++) * 10000;
+                    return x - Math.floor(x);
+                };
+
+                const shuffledStd = [...standardSentences]
+                    .map(item => ({ item, sortVal: seededRandom() }))
+                    .sort((a, b) => a.sortVal - b.sortVal)
+                    .map(obj => obj.item);
+
                 const selectedStd = shuffledStd.slice(0, 4).map((q, idx) => ({
                     type: `기본 동화 문장 ${idx + 1}`,
                     q_ko: q.q_ko,
@@ -442,7 +455,6 @@
                         ))}
                     </div>
 
-                    {/* 학생 검색창 */}
                     <div className="relative mb-4">
                         <input 
                             type="text" 
@@ -646,12 +658,18 @@
             const startRecording = async () => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorderRef.current = new MediaRecorder(stream);
+                    
+                    let mimeType = 'audio/webm;codecs=opus';
+                    if (!MediaRecorder.isTypeSupported(mimeType)) {
+                        mimeType = 'audio/mp4';
+                    }
+
+                    mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
                     audioChunksRef.current = [];
 
                     mediaRecorderRef.current.ondataavailable = (e) => audioChunksRef.current.push(e.data);
                     mediaRecorderRef.current.onstop = () => {
-                        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+                        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
                         setAudioUrl(URL.createObjectURL(audioBlob));
                         
                         const reader = new FileReader();
@@ -677,7 +695,6 @@
                 if (isMarking) return;
                 setIsMarking(true);
 
-                // 8문제 상한선 초과 중복 채점 방지
                 if (testDetails.length >= testQuestions.length) {
                     setIsMarking(false);
                     return;
@@ -708,7 +725,6 @@
                     changeQuestionIndex(updatedDetails.length);
                     setTimeout(() => setIsMarking(false), 200);
                 } else {
-                    // 정확히 8문제 완료 시점
                     const payload = {
                         action: 'saveScore',
                         data: { studentName, score: nextScore, details: updatedDetails }
@@ -721,7 +737,7 @@
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
                         });
-                        alert(`평가 완료! 구글 시트에 저장되었습니다. (최종 점수: ${nextScore} / ${testQuestions.length}점)`);
+                        alert(`평가 완료! 녹음 파일 및 채점 내역이 구글 드라이브와 시트에 저장되었습니다. (최종 점수: ${nextScore} / ${testQuestions.length}점)`);
                     } catch(e) {
                         alert("구글 시트 저장 중 에러가 발생했습니다.");
                     }
