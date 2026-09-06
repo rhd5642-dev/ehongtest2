@@ -35,11 +35,19 @@
         const { useState, useEffect, useRef } = React;
 
         // 배포한 구글 앱스 스크립트(GAS) 웹 앱 URL을 입력하세요.
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbwjl7Y4otVBVaxbH8J14KGcJH-rMYl5wISFoYCCcZxYBh9aG-_2KpNpnzXJvVf0D2Stdg/exec";
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwvtqNgQOHNCqMXhnX8L_FOQyoIDKJJ6ubrjX0XZV5-ftzaPRVK_d784gkPyUBc2XIjRA/exec";
         const CLASS_OPTIONS = ['a8반', 'b7반', 'c6반', 'e1반'];
 
         // 탭 간 실시간 문제 동기화 채널
         const syncChannel = new BroadcastChannel('japanese_test_sync');
+
+        // 단어 뒤 붙은 조사를 자동으로 분리하는 헬퍼 함수
+        const splitTextWithParticles = (text) => {
+            if (!text) return [];
+            // 주요 조사 패턴 (에서, 부터, 까지, 으로, 은, 는, 이, 가, 을, 를, 로, 에, 과, 와, 도, 만)
+            const separated = text.replace(/([가-힣A-Za-z0-9]+)(에서|부터|까지|으로|은|는|이|가|을|를|로|에|과|와|도|만)(?=\s|[?.,!]|$)/g, '$1 $2');
+            return separated.trim().split(/\s+/).filter(Boolean);
+        };
 
         const wordsData = [
             { ko: "흙", jp: "つち [츠치]" },
@@ -111,8 +119,8 @@
             { q_ko: "오린 것으로 무엇 만들어?", q_jp: "きりぬきで なに つくる [키리ぬき데 나니 츠쿠루]", a_ko: "오린 것으로 그림책 만들어", a_jp: "きりぬきで えほん つくる [키리누키데 에혼 츠쿠루]" },
             { q_ko: "물은 무엇 만들어?", q_jp: "みずは なに つくる [미즈와 나니 츠쿠루]", a_ko: "물은 강 만들어", a_jp: "みずは かわ つくる [미즈와 카와 츠쿠루]" },
             { q_ko: "강으로 무엇 만들어?", q_jp: "かわで なに つくる [카와데 나니 츠쿠루]", a_ko: "강으로 댐 만들어", a_jp: "かわで ダム つくる [카와데 다무 츠쿠루]" },
-            { q_ko: "댐으로 무엇 만들어?", q_jp: "ダムで なに つくる [다무데 나니 츠쿠루]", a_ko: "댐으로 전기 만들어", a_jp: "ダムで でんき つくる [다무데 덴키 츠쿠루]" },
-            { q_ko: "전기가 무엇 만들어?", q_jp: "でんきが なに つくる [덴키가 나니 츠쿠루]", a_ko: "전기가 빛 만들어", a_jp: "でんきが あかり つくる [덴키가 あかり 츠쿠루]" },
+            { q_ko: "댐으로 무엇 만들어?", q_jp: "ダムで なに つくる [다무데 나니 츠쿠루]", a_ko: "댐으로 전기 만들어", a_jp: "ダムで でんき つくる [다무데 デン키 츠쿠루]" },
+            { q_ko: "전이가 무엇 만들어?", q_jp: "でんきが なに つくる [덴키가 나니 츠쿠루]", a_ko: "전기가 빛 만들어", a_jp: "でんきが あかり つくる [덴키가 あかり 츠쿠루]" },
             { q_ko: "햇님은 무엇 만들어?", q_jp: "おひさまは なに つくる [오히사마와 나니 츠쿠루]", a_ko: "햇님은 야채 만들어", a_jp: "おひさまは やさい つくる [오히사마와 야사이 츠쿠루]" },
             { q_ko: "야채로 무엇 만들어?", q_jp: "やさいで なに つくる [야사이데 나니 츠쿠루]", a_ko: "야채로 샐러드 만들어", a_jp: "やさいで サラダ つくる [야사이데 사라다 츠쿠루]" },
             { q_ko: "샐러드는 무엇 만들어?", q_jp: "サラダは なに つくる [사라다와 나니 츠쿠루]", a_ko: "샐러드는 몸 만들어", a_jp: "サラダは からだ つくる [사라다와 카라다 츠쿠루]" },
@@ -552,6 +560,7 @@
 
         function StudentDisplayScreen({ setScreen, testQuestions, studentName }) {
             const [idx, setIdx] = useState(0);
+            const [timeLeft, setTimeLeft] = useState(30);
 
             useEffect(() => {
                 const handleMessage = (event) => {
@@ -562,6 +571,29 @@
                 syncChannel.addEventListener('message', handleMessage);
                 return () => syncChannel.removeEventListener('message', handleMessage);
             }, []);
+
+            // 문항 변경 시 30초 타이머 리셋
+            useEffect(() => {
+                setTimeLeft(30);
+            }, [idx]);
+
+            // 30초 카운트다운 & 0초 초과 시 자동 다음 문항 이동
+            useEffect(() => {
+                if (timeLeft <= 0) {
+                    if (idx < testQuestions.length - 1) {
+                        const nextIdx = idx + 1;
+                        setIdx(nextIdx);
+                        syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: nextIdx });
+                    }
+                    return;
+                }
+
+                const timer = setInterval(() => {
+                    setTimeLeft(prev => prev - 1);
+                }, 1000);
+
+                return () => clearInterval(timer);
+            }, [timeLeft, idx, testQuestions.length]);
 
             const current = testQuestions[idx];
 
@@ -578,16 +610,26 @@
 
             return (
                 <div className="max-w-2xl mx-auto py-6 flex flex-col justify-between min-h-[75vh]">
+                    {/* 상단 바 (대시보드 / 학생이름 / 스톱워치 / 셋트 카운터) */}
                     <div className="flex justify-between items-center border-b pb-4 mb-4">
                         <button onClick={() => setScreen('teacher-dashboard')} className="text-gray-500 font-bold text-sm">
                             <i className="fa-solid fa-arrow-left mr-1"></i> 대시보드
                         </button>
                         <span className="font-extrabold text-teal-700 text-lg">{studentName} 질문 제시 화면</span>
-                        <span className="bg-teal-100 text-teal-800 font-black text-sm px-3 py-1 rounded-full">
-                            셋트 {idx + 1} / {testQuestions.length}
-                        </span>
+                        <div className="flex items-center gap-2">
+                            {/* 30초 스톱워치 (5초 이하 남을 시 빨간색 깜빡임 경고) */}
+                            <span className={`px-3 py-1 rounded-full font-black text-sm flex items-center gap-1.5 transition-all ${
+                                timeLeft <= 5 ? 'bg-red-500 text-white animate-pulse' : 'bg-amber-100 text-amber-800 border border-amber-300'
+                            }`}>
+                                <i className="fa-solid fa-stopwatch"></i> {timeLeft}초
+                            </span>
+                            <span className="bg-teal-100 text-teal-800 font-black text-sm px-3 py-1 rounded-full">
+                                셋트 {idx + 1} / {testQuestions.length}
+                            </span>
+                        </div>
                     </div>
 
+                    {/* 질문 내용 카드 */}
                     <div className="my-auto py-12 px-6 bg-teal-50/60 rounded-3xl border-2 border-teal-100 text-center shadow-sm">
                         <span className="text-xs font-bold bg-white text-teal-700 px-3 py-1 rounded-full border border-teal-200">
                             {current.type}
@@ -598,6 +640,7 @@
                         </div>
                     </div>
 
+                    {/* 하단 탐색 버튼 (이전 문제 / 다음 문제) */}
                     <div className="flex justify-between items-center gap-4 pt-6 border-t mt-4">
                         <button 
                             disabled={idx === 0} 
@@ -606,9 +649,9 @@
                                 setIdx(newIdx);
                                 syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: newIdx });
                             }} 
-                            className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:opacity-30 text-gray-800 font-bold py-4 rounded-xl text-lg transition-all flex items-center justify-center"
+                            className="flex-1 bg-gray-200 hover:bg-gray-300 disabled:opacity-30 text-gray-800 font-bold py-4 rounded-xl text-lg transition-all flex items-center justify-center gap-2"
                         >
-                            <i className="fa-solid fa-chevron-left mr-2"></i> 이전 문제
+                            <i className="fa-solid fa-chevron-left"></i> 이전 문제
                         </button>
                         <button 
                             disabled={idx === testQuestions.length - 1} 
@@ -617,9 +660,9 @@
                                 setIdx(newIdx);
                                 syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: newIdx });
                             }} 
-                            className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-30 text-white font-bold py-4 rounded-xl text-lg shadow-md transition-all flex items-center justify-center"
+                            className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-30 text-white font-bold py-4 rounded-xl text-lg shadow-md transition-all flex items-center justify-center gap-2"
                         >
-                            다음 문제 <i className="fa-solid fa-chevron-right ml-2"></i>
+                            다음 문제 <i className="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
@@ -700,7 +743,8 @@
                     return;
                 }
 
-                const words = current.ko ? current.ko.split(/\s+/) : [];
+                // 단어와 조사 분리 함수 적용
+                const words = splitTextWithParticles(current.ko);
                 const markedWrongWords = wrongWordIndices.map(i => words[i]);
 
                 const currentRecord = {
@@ -747,7 +791,8 @@
                 }
             };
 
-            const wordList = current.ko ? current.ko.split(/\s+/) : [];
+            // 단어와 조사 분리 함수 적용
+            const wordList = splitTextWithParticles(current.ko);
 
             return (
                 <div className="max-w-lg mx-auto py-6 text-center">
@@ -760,7 +805,7 @@
                         <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">{current.type}</span>
                         
                         <p className="text-xs text-gray-400 font-bold mt-4 mb-2 text-left">
-                            💡 틀린 단어를 클릭하면 빨간색 취소선으로 표시됩니다.
+                            💡 틀린 단어 또는 조사를 클릭하면 빨간색 취소선으로 표시됩니다.
                         </p>
 
                         <div className="flex flex-wrap gap-2 my-2 text-left bg-gray-50 p-4 rounded-xl leading-relaxed">
