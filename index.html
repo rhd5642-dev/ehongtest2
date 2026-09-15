@@ -117,7 +117,7 @@
             { q_ko: "돌로 무엇 만들어?", q_jp: "いしで なに つくる [이시데 나니 츠쿠루]", a_ko: "돌로 철 만들어", a_jp: "いしで てつ つくる [이시데 테츠 츠쿠루]" },
             { q_ko: "철로 무엇 만들어?", q_jp: "てつで なに つくる [테츠데 나니 츠쿠루]", a_ko: "철로 가위 만들어", a_jp: "てつで はさみ つくる [테츠데 하사미 츠쿠루]" },
             { q_ko: "가위로 무엇 만들어?", q_jp: "はさみで なに つくる [하사데 나니 츠쿠루]", a_ko: "가위로 오린 것 만들어", a_jp: "はさみで きりぬき つくる [하사미데 키리누키 츠쿠루]" },
-            { q_ko: "오린 것으로 무엇 만들어?", q_jp: "きりぬきで なに つくる [키리누키데 나니 츠쿠루]", a_ko: "오린 것으로 그림책 만들어", a_jp: "きりぬきで えほん つくる [키리누키데 에혼 츠쿠루]" },
+            { q_ko: "오린 것으로 무엇 만들어?", q_jp: "きりぬきで なに つくる [키리ぬき데 나니 츠쿠루]", a_ko: "오린 것으로 그림책 만들어", a_jp: "きりぬきで えほん つくる [키리누키데 에혼 츠쿠루]" },
             { q_ko: "물은 무엇 만들어?", q_jp: "みずは なに つくる [미즈와 나니 츠쿠루]", a_ko: "물은 강 만들어", a_jp: "みずは かわ つくる [미즈와 카와 츠쿠루]" },
             { q_ko: "강으로 무엇 만들어?", q_jp: "かわで なに つくる [카와데 나니 츠쿠루]", a_ko: "강으로 댐 만들어", a_jp: "かわで ダム つくる [카와데 다무 츠쿠루]" },
             { q_ko: "댐으로 무엇 만들어?", q_jp: "ダムで なに つくる [다무데 나니 츠쿠루]", a_ko: "댐으로 전기 만들어", a_jp: "ダムで でんき つくる [다무데 키 츠쿠루]" },
@@ -503,8 +503,7 @@
             );
         }
 
-        function TeacherDashboardScreen({ setScreen, studentData, testScores, setSelectedStudent, setTestQuestions }) {
-            const [selectedClass, setSelectedClass] = useState('a8반');
+        function TeacherDashboardScreen({ setScreen, studentData, testScores, setSelectedStudent, setTestQuestions, selectedClass, setSelectedClass }) {
             const [activeTab, setActiveTab] = useState('status');
             const [searchTerm, setSearchTerm] = useState('');
 
@@ -804,9 +803,9 @@
                                 setIdx(newIdx);
                                 syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: newIdx });
                             }} 
-                            className="flex-1 bg-teal-600 hover:bg-teal-700 disabled:opacity-30 text-white font-bold py-4 rounded-xl text-lg shadow-md transition-all flex items-center justify-center gap-2"
+                            className="flex-1 bg-white hover:bg-gray-100 border-2 border-gray-200 disabled:opacity-30 text-gray-800 font-bold py-4 rounded-xl text-lg shadow-sm transition-all flex items-center justify-center gap-2"
                         >
-                            다음 문제 <i className="fa-solid fa-chevron-right"></i>
+                            다음문제 <i className="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
@@ -814,11 +813,30 @@
         }
 
         // 모든 문제를 한 화면에서 채점하고 손글씨 피드백을 작성하는 채점 화면
-        function TestRunScreen({ setScreen, testQuestions, studentName, refreshData }) {
-            const [marks, setMarks] = useState(() => testQuestions.map(() => 'correct'));
-            const [wrongWordsPerQ, setWrongWordsPerQ] = useState(() => testQuestions.map(() => []));
-            const [recordingsPerQ, setRecordingsPerQ] = useState(() => testQuestions.map(() => ({ audioUrl: null, audioBase64: null })));
-            const [feedbackPerQ, setFeedbackPerQ] = useState(() => testQuestions.map(() => null));
+        function TestRunScreen({ setScreen, testQuestions, studentName, refreshData, testScores }) {
+            const existingData = testScores[studentName]?.details || [];
+
+            const [marks, setMarks] = useState(() => 
+                testQuestions.map((_, i) => existingData[i] ? existingData[i].markType || (existingData[i].isCorrect ? 'correct' : 'wrong') : 'correct')
+            );
+            const [wrongWordsPerQ, setWrongWordsPerQ] = useState(() => 
+                testQuestions.map((q, i) => {
+                    if (existingData[i] && existingData[i].wrongWords) {
+                        const words = splitTextWithParticles(q.ko);
+                        return existingData[i].wrongWords.map(ww => words.indexOf(ww)).filter(idx => idx !== -1);
+                    }
+                    return [];
+                })
+            );
+            const [recordingsPerQ, setRecordingsPerQ] = useState(() => 
+                testQuestions.map((_, i) => ({ 
+                    audioUrl: existingData[i]?.audioDataUrl || null, 
+                    audioBase64: existingData[i]?.audioDataUrl || null 
+                }))
+            );
+            const [feedbackPerQ, setFeedbackPerQ] = useState(() => 
+                testQuestions.map((_, i) => existingData[i]?.handwritingFeedback || null)
+            );
             const [showAnswerPerQ, setShowAnswerPerQ] = useState(() => testQuestions.map(() => false));
             const [recordingQIdx, setRecordingQIdx] = useState(null);
             const [isSaving, setIsSaving] = useState(false);
@@ -1129,6 +1147,7 @@
             const [isLoading, setIsLoading] = useState(false);
             const [selectedStudent, setSelectedStudent] = useState('');
             const [testQuestions, setTestQuestions] = useState([]);
+            const [selectedClass, setSelectedClass] = useState('a8반');
 
             const refreshData = async () => {
                 if (!GAS_URL || GAS_URL.includes("여기에")) return;
@@ -1154,8 +1173,8 @@
                         {screen === 'practice' && <PracticeScreen setScreen={setScreen} />}
                         {screen === 'student-submit' && <StudentSubmitScreen setScreen={setScreen} refreshData={refreshData} />}
                         {screen === 'teacher-login' && <TeacherLoginScreen setScreen={setScreen} />}
-                        {screen === 'teacher-dashboard' && <TeacherDashboardScreen setScreen={setScreen} studentData={studentData} testScores={testScores} setSelectedStudent={setSelectedStudent} setTestQuestions={setTestQuestions} />}
-                        {screen === 'test-run' && <TestRunScreen setScreen={setScreen} testQuestions={testQuestions} studentName={selectedStudent} refreshData={refreshData} />}
+                        {screen === 'teacher-dashboard' && <TeacherDashboardScreen setScreen={setScreen} studentData={studentData} testScores={testScores} setSelectedStudent={setSelectedStudent} setTestQuestions={setTestQuestions} selectedClass={selectedClass} setSelectedClass={setSelectedClass} />}
+                        {screen === 'test-run' && <TestRunScreen setScreen={setScreen} testQuestions={testQuestions} studentName={selectedStudent} refreshData={refreshData} testScores={testScores} />}
                         {screen === 'student-display' && <StudentDisplayScreen setScreen={setScreen} testQuestions={testQuestions} studentName={selectedStudent} />}
                     </div>
                 </div>
