@@ -26,6 +26,8 @@
         .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
         .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; }
         .flip-card-back { transform: rotateY(180deg); }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body>
@@ -34,7 +36,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // 배포한 구글 앱스 스크립트(GAS) 웹 앱 URL을 입력하세요.
+        // 구글 앱스 스크립트(GAS) 웹 앱 URL
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwvtqNgQOHNCqMXhnX8L_FOQyoIDKJJ6ubrjX0XZV5-ftzaPRVK_d784gkPyUBc2XIjRA/exec";
         const CLASS_OPTIONS = ['a8반', 'b7반', 'c6반', 'e1반'];
 
@@ -151,6 +153,136 @@
             utterance.rate = 0.85; 
             window.speechSynthesis.speak(utterance);
         };
+
+        // 손글씨 피드백 작성용 캔버스 컴포넌트
+        function HandwritingCanvas({ value, onChange }) {
+            const canvasRef = useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+            const [penColor, setPenColor] = useState('#dc2626'); // 기본 빨간색
+            const [isEmpty, setIsEmpty] = useState(!value);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+
+                if (value) {
+                    const img = new Image();
+                    img.onload = () => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                    };
+                    img.src = value;
+                    setIsEmpty(false);
+                }
+            }, []);
+
+            const getPos = (e) => {
+                const canvas = canvasRef.current;
+                if (!canvas) return { x: 0, y: 0 };
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * (canvas.width / rect.width),
+                    y: (clientY - rect.top) * (canvas.height / rect.height)
+                };
+            };
+
+            const startDrawing = (e) => {
+                e.preventDefault();
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const pos = getPos(e);
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+                ctx.strokeStyle = penColor;
+                ctx.lineWidth = 3;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                setIsDrawing(true);
+                setIsEmpty(false);
+            };
+
+            const draw = (e) => {
+                if (!isDrawing) return;
+                e.preventDefault();
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                const pos = getPos(e);
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+            };
+
+            const stopDrawing = () => {
+                if (!isDrawing) return;
+                setIsDrawing(false);
+                const canvas = canvasRef.current;
+                if (canvas && onChange) {
+                    onChange(canvas.toDataURL());
+                }
+            };
+
+            const clearCanvas = () => {
+                const canvas = canvasRef.current;
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                setIsEmpty(true);
+                if (onChange) onChange(null);
+            };
+
+            return (
+                <div className="flex flex-col gap-1 w-full my-3">
+                    <div className="flex justify-between items-center text-xs font-bold text-gray-700 mb-1">
+                        <span className="flex items-center gap-1.5 text-indigo-900 font-extrabold">
+                            <i className="fa-solid fa-pen-nib text-indigo-600"></i> 손글씨 피드백 작성
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <div className="flex gap-1 items-center bg-gray-100 p-1 rounded-lg border">
+                                {['#dc2626', '#2563eb', '#111827'].map(color => (
+                                    <button
+                                        key={color}
+                                        type="button"
+                                        onClick={() => setPenColor(color)}
+                                        style={{ backgroundColor: color }}
+                                        className={`w-5 h-5 rounded-full border-2 transition-all ${penColor === color ? 'border-amber-400 scale-110 shadow' : 'border-white'}`}
+                                    />
+                                ))}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={clearCanvas}
+                                className="px-2.5 py-1 text-[11px] bg-gray-200 hover:bg-gray-300 rounded-lg font-bold text-gray-700 flex items-center gap-1 transition-all"
+                            >
+                                <i className="fa-solid fa-eraser"></i> 지우기
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="relative border-2 border-indigo-200 rounded-xl bg-white overflow-hidden shadow-inner touch-none">
+                        {isEmpty && (
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-300 text-xs font-bold select-none">
+                                ✍️ 여백에 터치나 마우스로 손글씨 피드백을 작성하세요
+                            </div>
+                        )}
+                        <canvas
+                            ref={canvasRef}
+                            width={600}
+                            height={140}
+                            onMouseDown={startDrawing}
+                            onMouseMove={draw}
+                            onMouseUp={stopDrawing}
+                            onMouseLeave={stopDrawing}
+                            onTouchStart={startDrawing}
+                            onTouchMove={draw}
+                            onTouchEnd={stopDrawing}
+                            className="w-full h-28 cursor-crosshair block"
+                        />
+                    </div>
+                </div>
+            );
+        }
 
         function HomeScreen({ setScreen, refreshData, isLoading }) {
             return (
@@ -451,7 +583,7 @@
 
                     <div className="flex bg-gray-200 rounded-lg p-1 mb-4">
                         <button onClick={() => setActiveTab('status')} className={`flex-1 py-2 font-bold rounded-md ${activeTab === 'status' ? 'bg-white text-indigo-600 shadow' : 'text-gray-500'}`}>제출 & 평가 진행</button>
-                        <button onClick={() => setActiveTab('results')} className={`flex-1 py-2 font-bold rounded-md ${activeTab === 'results' ? 'bg-white text-indigo-600 shadow' : 'text-gray-500'}`}>채점 결과 & 녹음 확인</button>
+                        <button onClick={() => setActiveTab('results')} className={`flex-1 py-2 font-bold rounded-md ${activeTab === 'results' ? 'bg-white text-indigo-600 shadow' : 'text-gray-500'}`}>채점 결과 & 피드백 확인</button>
                     </div>
 
                     <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
@@ -492,7 +624,7 @@
                                         </div>
                                         <div className="flex gap-2 w-full sm:w-auto">
                                             <button onClick={() => startTest(stKey)} className="flex-1 sm:flex-none bg-indigo-600 text-white px-3 py-2 rounded-lg font-bold text-xs shadow hover:bg-indigo-700">
-                                                {isEvaluated ? '재채점' : '평가 시작 (채점용)'}
+                                                {isEvaluated ? '재채점' : '전체 한눈에 채점'}
                                             </button>
                                             <button onClick={() => openStudentDisplay(stKey)} className="flex-1 sm:flex-none bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg font-bold text-xs shadow transition-all flex items-center justify-center gap-1.5 whitespace-nowrap">
                                                 📱 학생용 (태블릿)
@@ -528,9 +660,9 @@
                                                             item.markType === 'partial' ? 'bg-yellow-500 text-white' : 
                                                             'bg-red-500 text-white'
                                                         }`}>
-                                                            {item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'O 정답' : 
-                                                             item.markType === 'partial' ? '△ 부분 오답' : 
-                                                             'X 완전 오답'}
+                                                            {item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'O 정답 (1점)' : 
+                                                             item.markType === 'partial' ? '△ 부분 오답 (0.5점)' : 
+                                                             'X 완전 오답 (0점)'}
                                                         </span>
                                                     </div>
 
@@ -543,15 +675,22 @@
                                                         </div>
                                                     )}
 
-                                                    {item.audioDataUrl ? (
+                                                    {item.audioDataUrl && (
                                                         <div className="mt-2 pt-2 border-t border-gray-200">
                                                             <p className="text-[11px] text-indigo-700 font-bold mb-1 flex items-center gap-1">
                                                                 <i className="fa-solid fa-microphone text-indigo-500"></i> 녹음된 학생 발음 재생:
                                                             </p>
                                                             <audio controls src={item.audioDataUrl} className="w-full h-8 rounded" />
                                                         </div>
-                                                    ) : (
-                                                        <p className="text-[10px] text-gray-400 mt-1 italic">🎙️ 녹음 데이터 없음</p>
+                                                    )}
+
+                                                    {item.handwritingFeedback && (
+                                                        <div className="mt-2 pt-2 border-t border-indigo-100">
+                                                            <p className="text-[11px] text-indigo-800 font-bold mb-1 flex items-center gap-1">
+                                                                <i className="fa-solid fa-pen-nib text-indigo-600"></i> 교사 손글씨 피드백:
+                                                            </p>
+                                                            <img src={item.handwritingFeedback} alt="손글씨 피드백" className="max-h-28 border border-indigo-200 rounded-lg bg-white p-1" />
+                                                        </div>
                                                     )}
                                                 </div>
                                             ))}
@@ -581,12 +720,10 @@
                 return () => syncChannel.removeEventListener('message', handleMessage);
             }, []);
 
-            // 문항 변경 시 20초 타이머 리셋
             useEffect(() => {
                 setTimeLeft(20);
             }, [idx]);
 
-            // 20초 카운트다운 & 0초 초과 시 자동 다음 문항 이동
             useEffect(() => {
                 if (timeLeft <= 0) {
                     if (idx < testQuestions.length - 1) {
@@ -619,14 +756,12 @@
 
             return (
                 <div className="max-w-2xl mx-auto py-6 flex flex-col justify-between min-h-[75vh]">
-                    {/* 상단 바 (대시보드 / 학생이름 / 대형 20초 스톱워치 / 셋트 카운터) */}
                     <div className="flex justify-between items-center border-b pb-4 mb-4">
                         <button onClick={() => setScreen('teacher-dashboard')} className="text-gray-500 font-bold text-sm">
                             <i className="fa-solid fa-arrow-left mr-1"></i> 대시보드
                         </button>
                         <span className="font-extrabold text-teal-700 text-lg">{studentName} 질문 제시 화면</span>
                         <div className="flex items-center gap-2">
-                            {/* 강조된 20초 대형 스톱워치 */}
                             <span className={`px-4 py-1.5 rounded-full font-black flex items-center gap-1.5 transition-all border ${
                                 timeLeft <= 5 ? 'bg-red-500 text-white border-red-600 animate-pulse' : 'bg-amber-100 text-amber-900 border-amber-300'
                             }`}>
@@ -640,7 +775,6 @@
                         </div>
                     </div>
 
-                    {/* 질문 내용 카드 */}
                     <div className="my-auto py-12 px-6 bg-teal-50/60 rounded-3xl border-2 border-teal-100 text-center shadow-sm">
                         <span className="text-xs font-bold bg-white text-teal-700 px-3 py-1 rounded-full border border-teal-200">
                             {current.type}
@@ -651,7 +785,6 @@
                         </div>
                     </div>
 
-                    {/* 하단 탐색 버튼 (이전 문제 / 다음 문제) */}
                     <div className="flex justify-between items-center gap-4 pt-6 border-t mt-4">
                         <button 
                             disabled={idx === 0} 
@@ -680,43 +813,63 @@
             );
         }
 
+        // 모든 문제를 한 화면에서 채점하고 손글씨 피드백을 작성하는 채점 화면
         function TestRunScreen({ setScreen, testQuestions, studentName, refreshData }) {
-            const [idx, setIdx] = useState(0);
-            const [score, setScore] = useState(0);
-            const [showAnswer, setShowAnswer] = useState(false);
-            const [isRecording, setIsRecording] = useState(false);
-            const [audioUrl, setAudioUrl] = useState(null);
-            const [audioBase64, setAudioBase64] = useState(null);
-            const [testDetails, setTestDetails] = useState([]);
-            const [wrongWordIndices, setWrongWordIndices] = useState([]);
-            const [isMarking, setIsMarking] = useState(false);
+            const [marks, setMarks] = useState(() => testQuestions.map(() => 'correct'));
+            const [wrongWordsPerQ, setWrongWordsPerQ] = useState(() => testQuestions.map(() => []));
+            const [recordingsPerQ, setRecordingsPerQ] = useState(() => testQuestions.map(() => ({ audioUrl: null, audioBase64: null })));
+            const [feedbackPerQ, setFeedbackPerQ] = useState(() => testQuestions.map(() => null));
+            const [showAnswerPerQ, setShowAnswerPerQ] = useState(() => testQuestions.map(() => false));
+            const [recordingQIdx, setRecordingQIdx] = useState(null);
+            const [isSaving, setIsSaving] = useState(false);
 
             const mediaRecorderRef = useRef(null);
             const audioChunksRef = useRef([]);
 
-            const current = testQuestions[idx];
+            // 실시간 총점 계산 (정답 1점, 부분오답 0.5점, 오답 0점)
+            const totalScore = marks.reduce((acc, m) => acc + (m === 'correct' ? 1 : m === 'partial' ? 0.5 : 0), 0);
 
-            const changeQuestionIndex = (newIdx) => {
-                setIdx(newIdx);
-                syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: newIdx });
+            const setMarkForQ = (qIdx, markType) => {
+                const nextMarks = [...marks];
+                nextMarks[qIdx] = markType;
+                setMarks(nextMarks);
             };
 
-            const toggleWord = (wordIdx) => {
-                if (wrongWordIndices.includes(wordIdx)) {
-                    setWrongWordIndices(wrongWordIndices.filter(i => i !== wordIdx));
-                } else {
-                    setWrongWordIndices([...wrongWordIndices, wordIdx]);
+            const toggleWordForQ = (qIdx, wordIdx) => {
+                const currentList = wrongWordsPerQ[qIdx] || [];
+                const nextList = currentList.includes(wordIdx)
+                    ? currentList.filter(i => i !== wordIdx)
+                    : [...currentList, wordIdx];
+                const nextState = [...wrongWordsPerQ];
+                nextState[qIdx] = nextList;
+                setWrongWordsPerQ(nextState);
+            };
+
+            const toggleAnswerForQ = (qIdx) => {
+                const nextState = [...showAnswerPerQ];
+                nextState[qIdx] = !nextState[qIdx];
+                setShowAnswerPerQ(nextState);
+            };
+
+            const handleFeedbackChange = (qIdx, dataUrl) => {
+                const nextState = [...feedbackPerQ];
+                nextState[qIdx] = dataUrl;
+                setFeedbackPerQ(nextState);
+            };
+
+            const syncQuestionToStudent = (qIdx) => {
+                syncChannel.postMessage({ type: 'CHANGE_QUESTION_INDEX', index: qIdx });
+                const element = document.getElementById(`question-card-${qIdx}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
             };
 
-            const startRecording = async () => {
+            const startRecording = async (qIdx) => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    
                     let mimeType = 'audio/webm;codecs=opus';
-                    if (!MediaRecorder.isTypeSupported(mimeType)) {
-                        mimeType = 'audio/mp4';
-                    }
+                    if (!MediaRecorder.isTypeSupported(mimeType)) mimeType = 'audio/mp4';
 
                     mediaRecorderRef.current = new MediaRecorder(stream, { mimeType });
                     audioChunksRef.current = [];
@@ -724,202 +877,245 @@
                     mediaRecorderRef.current.ondataavailable = (e) => audioChunksRef.current.push(e.data);
                     mediaRecorderRef.current.onstop = () => {
                         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
-                        setAudioUrl(URL.createObjectURL(audioBlob));
+                        const url = URL.createObjectURL(audioBlob);
                         
                         const reader = new FileReader();
                         reader.readAsDataURL(audioBlob);
-                        reader.onloadend = () => setAudioBase64(reader.result);
+                        reader.onloadend = () => {
+                            const nextRecordings = [...recordingsPerQ];
+                            nextRecordings[qIdx] = { audioUrl: url, audioBase64: reader.result };
+                            setRecordingsPerQ(nextRecordings);
+                        };
                     };
 
                     mediaRecorderRef.current.start();
-                    setIsRecording(true);
+                    setRecordingQIdx(qIdx);
                 } catch (err) {
                     alert("마이크 권한이 필요합니다.");
                 }
             };
 
             const stopRecording = () => {
-                if (mediaRecorderRef.current && isRecording) {
+                if (mediaRecorderRef.current && recordingQIdx !== null) {
                     mediaRecorderRef.current.stop();
-                    setIsRecording(false);
+                    setRecordingQIdx(null);
                 }
             };
 
-            // 이전 문제로 되돌리기 함수 추가
-            const handlePrevious = () => {
-                if (testDetails.length === 0) return;
-                
-                const lastRecord = testDetails[testDetails.length - 1];
-                let scoreToSubtract = 0;
-                
-                if (lastRecord.markType === 'correct') scoreToSubtract = 1;
-                else if (lastRecord.markType === 'partial') scoreToSubtract = 0.5;
-                // 이전 기록 호환용
-                else if (lastRecord.isCorrect && !lastRecord.markType) scoreToSubtract = 1;
+            const handleSaveAll = async () => {
+                if (isSaving) return;
+                setIsSaving(true);
 
-                setScore(prev => prev - scoreToSubtract);
-                setTestDetails(prev => prev.slice(0, -1));
-                
-                changeQuestionIndex(idx - 1);
-                setWrongWordIndices([]);
-                setAudioUrl(null);
-                setAudioBase64(null);
-                setShowAnswer(false);
-            };
-
-            // 채점 함수 수정 (markType: 'correct', 'partial', 'wrong' 받음)
-            const handleMark = async (markType) => {
-                if (isMarking) return;
-                setIsMarking(true);
-
-                if (testDetails.length >= testQuestions.length) {
-                    setIsMarking(false);
-                    return;
-                }
-
-                const words = splitTextWithParticles(current.ko);
-                const markedWrongWords = wrongWordIndices.map(i => words[i]);
-
-                let addedScore = 0;
-                if (markType === 'correct') addedScore = 1;
-                else if (markType === 'partial') addedScore = 0.5;
-
-                const currentRecord = {
-                    ko: current.ko,
-                    jp: current.jp,
-                    isCorrect: markType === 'correct', // 호환용
-                    markType: markType, // 'correct', 'partial', 'wrong' 추가
-                    wrongWords: markedWrongWords,
-                    audioDataUrl: audioBase64
-                };
-                
-                const updatedDetails = [...testDetails, currentRecord];
-                setTestDetails(updatedDetails);
-
-                const nextScore = score + addedScore;
-                setScore(nextScore);
-
-                setAudioUrl(null);
-                setAudioBase64(null);
-                setShowAnswer(false);
-                setWrongWordIndices([]);
-
-                if (updatedDetails.length < testQuestions.length) {
-                    changeQuestionIndex(updatedDetails.length);
-                    setTimeout(() => setIsMarking(false), 200);
-                } else {
-                    const payload = {
-                        action: 'saveScore',
-                        data: { studentName, score: nextScore, details: updatedDetails }
+                const details = testQuestions.map((q, qIdx) => {
+                    const words = splitTextWithParticles(q.ko);
+                    const wrongIndices = wrongWordsPerQ[qIdx] || [];
+                    const markedWrongWords = wrongIndices.map(i => words[i]);
+                    const markType = marks[qIdx] || 'correct';
+                    return {
+                        ko: q.ko,
+                        jp: q.jp,
+                        isCorrect: markType === 'correct',
+                        markType: markType,
+                        wrongWords: markedWrongWords,
+                        audioDataUrl: recordingsPerQ[qIdx]?.audioBase64 || null,
+                        handwritingFeedback: feedbackPerQ[qIdx] || null
                     };
+                });
 
-                    try {
-                        await fetch(GAS_URL, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(payload)
-                        });
-                        alert(`평가 완료! 녹음 파일 및 채점 내역이 구글 드라이브와 시트에 저장되었습니다. (최종 점수: ${nextScore} / ${testQuestions.length}점)`);
-                    } catch(e) {
-                        alert("구글 시트 저장 중 에러가 발생했습니다.");
-                    }
-                    refreshData();
-                    setIsMarking(false);
-                    setScreen('teacher-dashboard');
+                const payload = {
+                    action: 'saveScore',
+                    data: { studentName, score: totalScore, details }
+                };
+
+                try {
+                    await fetch(GAS_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    alert(`전체 평가 완료!\n${studentName} 학생의 점수 (${totalScore} / ${testQuestions.length}점) 및 손글씨 피드백이 성공적으로 저장되었습니다.`);
+                } catch (e) {
+                    alert("구글 시트 저장 중 에러가 발생했습니다.");
                 }
+                refreshData();
+                setIsSaving(false);
+                setScreen('teacher-dashboard');
             };
-
-            const wordList = splitTextWithParticles(current.ko);
 
             return (
-                <div className="max-w-lg mx-auto py-6 text-center">
-                    <div className="flex justify-between items-center mb-4">
-                        <span className="font-bold text-gray-600">{studentName} 평가 중 (채점 전용)</span>
-                        <span className="font-bold text-indigo-600">셋트 {idx + 1} / {testQuestions.length}</span>
-                    </div>
+                <div className="max-w-2xl mx-auto py-2">
+                    {/* 상단 핀 고정 대시보드 헤더 */}
+                    <div className="sticky top-0 bg-white/95 backdrop-blur z-20 pb-3 border-b mb-6 shadow-sm">
+                        <div className="flex justify-between items-center mb-3 pt-2">
+                            <button onClick={() => setScreen('teacher-dashboard')} className="text-gray-600 font-bold text-sm hover:text-gray-900">
+                                <i className="fa-solid fa-arrow-left mr-1"></i> 대시보드
+                            </button>
+                            <span className="font-extrabold text-indigo-900 text-lg">{studentName} 전체 문항 채점</span>
+                            <div className="flex items-center gap-2">
+                                <span className="bg-indigo-100 text-indigo-900 font-black text-lg px-3.5 py-1 rounded-full border border-indigo-200">
+                                    {totalScore} / {testQuestions.length} 점
+                                </span>
+                            </div>
+                        </div>
 
-                    <div className="bg-white p-6 rounded-2xl border shadow-sm mb-6">
-                        <span className="text-xs font-bold bg-indigo-100 text-indigo-700 px-2.5 py-1 rounded-full">{current.type}</span>
-                        
-                        <p className="text-xs text-gray-400 font-bold mt-4 mb-2 text-left">
-                            💡 틀린 단어 또는 조사를 클릭하면 빨간색 취소선으로 표시됩니다.
-                        </p>
-
-                        <div className="flex flex-wrap gap-2 my-2 text-left bg-gray-50 p-4 rounded-xl leading-relaxed">
-                            {wordList.map((word, wIdx) => {
-                                const isWrong = wrongWordIndices.includes(wIdx);
+                        {/* 문제 빠른 이동 및 채점 현황 바 */}
+                        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                            {testQuestions.map((q, qIdx) => {
+                                const m = marks[qIdx];
+                                const colorClass = m === 'correct' ? 'bg-green-600 text-white' : m === 'partial' ? 'bg-amber-500 text-white' : 'bg-red-500 text-white';
                                 return (
                                     <button
-                                        key={wIdx}
-                                        type="button"
-                                        onClick={() => toggleWord(wIdx)}
-                                        className={`px-3 py-1.5 rounded-lg font-bold text-base border transition-all cursor-pointer ${
-                                            isWrong
-                                                ? 'bg-red-500 text-white border-red-600 line-through shadow-inner'
-                                                : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100 shadow-sm'
-                                        }`}
+                                        key={qIdx}
+                                        onClick={() => syncQuestionToStudent(qIdx)}
+                                        className={`px-2.5 py-1 text-xs font-bold rounded-lg shrink-0 flex items-center gap-1 transition-all ${colorClass}`}
                                     >
-                                        {word}
+                                        <span>셋트 {qIdx + 1}</span>
+                                        <span className="text-[10px] opacity-90">{m === 'correct' ? 'O' : m === 'partial' ? '△' : 'X'}</span>
                                     </button>
                                 );
                             })}
                         </div>
-
-                        <button onClick={() => setShowAnswer(!showAnswer)} className="text-xs text-indigo-600 font-bold underline mb-2 mt-4">
-                            {showAnswer ? '정답 숨기기' : '🔒 교사용 정답 및 발음 확인'}
-                        </button>
-                        {showAnswer && <p className="text-indigo-600 font-bold japanese-font text-base whitespace-pre-line text-left bg-indigo-50 p-4 rounded-xl border border-indigo-100">{current.jp}</p>}
                     </div>
 
-                    <div className="bg-indigo-50 p-4 rounded-xl border mb-6 flex flex-col items-center gap-3">
-                        <p className="text-xs font-bold text-indigo-800">학생 발음 녹음</p>
-                        <div className="flex gap-2">
-                            {!isRecording ? (
-                                <button onClick={startRecording} className="bg-red-500 text-white font-bold px-4 py-2 rounded-lg text-sm">
-                                    <i className="fa-solid fa-microphone mr-1"></i> 녹음 시작
-                                </button>
-                            ) : (
-                                <button onClick={stopRecording} className="bg-gray-800 text-white font-bold px-4 py-2 rounded-lg text-sm animate-pulse">
-                                    <i className="fa-solid fa-stop mr-1"></i> 녹음 중단
-                                </button>
-                            )}
-                        </div>
-                        {audioUrl && <audio controls src={audioUrl} className="w-full mt-2 h-8" />}
+                    {/* 전체 8개 문제 카드가 한 화면에 일렬로 나열됨 */}
+                    <div className="space-y-6">
+                        {testQuestions.map((current, qIdx) => {
+                            const wordList = splitTextWithParticles(current.ko);
+                            const wrongIndices = wrongWordsPerQ[qIdx] || [];
+                            const currentMark = marks[qIdx];
+
+                            return (
+                                <div key={qIdx} id={`question-card-${qIdx}`} className="bg-white p-5 rounded-2xl border-2 border-gray-200 shadow-sm transition-all hover:border-indigo-200">
+                                    <div className="flex justify-between items-center mb-3 border-b pb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-indigo-600 text-white font-black text-xs px-2.5 py-1 rounded-md">셋트 {qIdx + 1}</span>
+                                            <span className="text-xs font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-100">{current.type}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => syncQuestionToStudent(qIdx)}
+                                            className="bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all"
+                                        >
+                                            <i className="fa-solid fa-mobile-screen"></i> 학생 태블릿 동기화
+                                        </button>
+                                    </div>
+
+                                    {/* 문장 및 틀린 단어 원터치 선택 */}
+                                    <div className="mb-3">
+                                        <p className="text-[11px] text-gray-400 font-bold mb-1.5 text-left">
+                                            💡 발음이나 표현이 틀린 단어를 클릭하면 취소선이 그어집니다.
+                                        </p>
+                                        <div className="flex flex-wrap gap-1.5 p-3 rounded-xl bg-gray-50 border leading-relaxed">
+                                            {wordList.map((word, wIdx) => {
+                                                const isWrong = wrongIndices.includes(wIdx);
+                                                return (
+                                                    <button
+                                                        key={wIdx}
+                                                        type="button"
+                                                        onClick={() => toggleWordForQ(qIdx, wIdx)}
+                                                        className={`px-2.5 py-1 rounded-lg font-bold text-sm border transition-all ${
+                                                            isWrong
+                                                                ? 'bg-red-500 text-white border-red-600 line-through shadow-inner'
+                                                                : 'bg-white text-gray-800 border-gray-300 hover:bg-gray-100 shadow-sm'
+                                                        }`}
+                                                    >
+                                                        {word}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+
+                                    {/* 교사용 정답 토글 */}
+                                    <div className="mb-3 text-left">
+                                        <button onClick={() => toggleAnswerForQ(qIdx)} className="text-xs text-indigo-600 font-bold underline mb-1">
+                                            {showAnswerPerQ[qIdx] ? '정답 숨기기' : '🔒 교사용 정답 및 발음 확인'}
+                                        </button>
+                                        {showAnswerPerQ[qIdx] && (
+                                            <p className="text-indigo-700 font-bold japanese-font text-sm whitespace-pre-line bg-indigo-50/80 p-3 rounded-xl border border-indigo-100">
+                                                {current.jp}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* O / △ / X 선택 버튼 */}
+                                    <div className="grid grid-cols-3 gap-2 mb-4">
+                                        <button
+                                            onClick={() => setMarkForQ(qIdx, 'correct')}
+                                            className={`py-2.5 rounded-xl font-extrabold text-xs sm:text-sm border transition-all flex items-center justify-center gap-1.5 ${
+                                                currentMark === 'correct'
+                                                    ? 'bg-green-500 text-white border-green-600 shadow-md ring-2 ring-green-300'
+                                                    : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                                            }`}
+                                        >
+                                            <i className="fa-solid fa-circle-check"></i> O (정답 1점)
+                                        </button>
+                                        <button
+                                            onClick={() => setMarkForQ(qIdx, 'partial')}
+                                            className={`py-2.5 rounded-xl font-extrabold text-xs sm:text-sm border transition-all flex items-center justify-center gap-1.5 ${
+                                                currentMark === 'partial'
+                                                    ? 'bg-amber-500 text-white border-amber-600 shadow-md ring-2 ring-amber-300'
+                                                    : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                                            }`}
+                                        >
+                                            <i className="fa-solid fa-triangle-exclamation"></i> △ (부분 0.5점)
+                                        </button>
+                                        <button
+                                            onClick={() => setMarkForQ(qIdx, 'wrong')}
+                                            className={`py-2.5 rounded-xl font-extrabold text-xs sm:text-sm border transition-all flex items-center justify-center gap-1.5 ${
+                                                currentMark === 'wrong'
+                                                    ? 'bg-red-500 text-white border-red-600 shadow-md ring-2 ring-red-300'
+                                                    : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                                            }`}
+                                        >
+                                            <i className="fa-solid fa-circle-xmark"></i> X (오답 0점)
+                                        </button>
+                                    </div>
+
+                                    {/* 학생 개별 발음 녹음 */}
+                                    <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 mb-3 flex flex-col items-center gap-2">
+                                        <div className="flex justify-between items-center w-full">
+                                            <span className="text-xs font-bold text-indigo-900">
+                                                <i className="fa-solid fa-microphone text-indigo-500 mr-1"></i> 학생 개별 발음 녹음
+                                            </span>
+                                            {recordingQIdx === qIdx ? (
+                                                <button onClick={stopRecording} className="bg-red-600 text-white font-bold px-3 py-1 rounded-lg text-xs animate-pulse">
+                                                    <i className="fa-solid fa-stop mr-1"></i> 녹음 중단
+                                                </button>
+                                            ) : (
+                                                <button onClick={() => startRecording(qIdx)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg text-xs shadow-sm">
+                                                    <i className="fa-solid fa-microphone mr-1"></i> 녹음 시작
+                                                </button>
+                                            )}
+                                        </div>
+                                        {recordingsPerQ[qIdx]?.audioUrl && (
+                                            <audio controls src={recordingsPerQ[qIdx].audioUrl} className="w-full h-8 mt-1" />
+                                        )}
+                                    </div>
+
+                                    {/* 손글씨 피드백 작성 캔버스 */}
+                                    <HandwritingCanvas
+                                        value={feedbackPerQ[qIdx]}
+                                        onChange={(dataUrl) => handleFeedbackChange(qIdx, dataUrl)}
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
 
-                    {/* 채점 버튼을 3개로 분리 및 이전으로 버튼 추가 */}
-                    <div className="flex flex-col gap-3">
-                        <div className="flex gap-2">
-                            <button 
-                                onClick={() => handleMark('wrong')} 
-                                disabled={isMarking} 
-                                className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl text-lg transition-all"
-                            >
-                                X (완전 오답)
-                            </button>
-                            <button 
-                                onClick={() => handleMark('partial')} 
-                                disabled={isMarking} 
-                                className="flex-1 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl text-lg transition-all"
-                            >
-                                △ (부분 오답)
-                            </button>
-                            <button 
-                                onClick={() => handleMark('correct')} 
-                                disabled={isMarking} 
-                                className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl text-lg transition-all"
-                            >
-                                O (정답)
-                            </button>
+                    {/* 하단 최종 제출 버튼 */}
+                    <div className="mt-8 pt-4 border-t sticky bottom-4 bg-white/90 backdrop-blur p-4 rounded-2xl shadow-xl border z-20">
+                        <div className="flex justify-between items-center mb-3">
+                            <span className="text-sm font-bold text-gray-700">최종 채점 합계:</span>
+                            <span className="text-2xl font-black text-indigo-600">{totalScore} / {testQuestions.length} 점</span>
                         </div>
-                        
-                        <button 
-                            onClick={handlePrevious} 
-                            disabled={isMarking || testDetails.length === 0} 
-                            className="w-full bg-gray-400 hover:bg-gray-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+                        <button
+                            onClick={handleSaveAll}
+                            disabled={isSaving}
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-xl text-lg shadow-lg transition-all flex items-center justify-center gap-2"
                         >
-                            <i className="fa-solid fa-arrow-rotate-left"></i> 이전 문제 다시 채점하기
+                            <i className="fa-solid fa-cloud-arrow-up"></i>
+                            {isSaving ? '구글 시트로 저장 중...' : '전체 채점 완료 및 구글 시트 저장'}
                         </button>
                     </div>
                 </div>
