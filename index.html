@@ -124,7 +124,7 @@
             { q_ko: "전이가 무엇 만들어?", q_jp: "でんきが なに つくる [덴키가 나니 츠쿠루]", a_ko: "전기가 빛 만들어", a_jp: "でんきが あかり つくる [덴키가 아카 츠쿠루]" },
             { q_ko: "햇님은 무엇 만들어?", q_jp: "おひさまは なに つくる [오히사마와 나니 츠쿠루]", a_ko: "햇님은 야채 만들어", a_jp: "おひさまは やさい つくる [오히사마와 야사이 츠쿠루]" },
             { q_ko: "야채로 무엇 만들어?", q_jp: "やさいで なに つくる [야사이데 나니 츠쿠루]", a_ko: "야채로 샐러드 만들어", a_jp: "やさいで サラダ つくる [야사이데 사라다 츠쿠루]" },
-            { q_ko: "샐러드는 무엇 만들어?", q_jp: "サラダは なに つくる [사라다와 나니 츠쿠루]", a_ko: "샐러드는 몸 만들어", a_jp: "サラダは からだ つくる [사라다와 카라다 츠쿠루]" },
+            { q_ko: "샐러드는 무엇 만들어?", q_jp: "サラダは なに つくる [사라다와 나니 츠쿠루]", a_ko: "샐러드는 몸 만들어", a_jp: "サラダは からだ つくる [사라다와 카라だ 츠쿠루]" },
             { q_ko: "몸으로 무엇 만들어?", q_jp: "からだで なに つくる [카라다데 나니 츠쿠루]", a_ko: "몸으로 기록 만들어", a_jp: "からだで きろく つくる [카라다데 키로쿠 츠쿠루]" },
             { q_ko: "성냥으로 무엇 만들어?", q_jp: "マッチで なに つくる [맛치데 나니 츠쿠루]", a_ko: "성냥으로 불을 만들어", a_jp: "マッチで ひを つくる [맛치데 히오 츠쿠루]" },
             { q_ko: "불로 무엇 만들어?", q_jp: "ひで なに つくる [히데 나니 츠쿠루]", a_ko: "불로 모닥불 만들어", a_jp: "ひで たきび つくる [히데 타키비 츠쿠루]" },
@@ -154,19 +154,31 @@
             window.speechSynthesis.speak(utterance);
         };
 
-        // 손글씨 피드백 작성용 캔버스 컴포넌트
+        // 손글씨 피드백 작성용 캔버스 컴포넌트 (캔버스 내부 터치 시만 스크롤 고정)
         function HandwritingCanvas({ value, onChange }) {
             const canvasRef = useRef(null);
             const [isDrawing, setIsDrawing] = useState(false);
-            const [penColor, setPenColor] = useState('#dc2626'); // 기본 빨간색
+            const [penColor, setPenColor] = useState('#dc2626');
             const [isEmpty, setIsEmpty] = useState(!value);
 
             useEffect(() => {
                 const canvas = canvasRef.current;
                 if (!canvas) return;
-                const ctx = canvas.getContext('2d');
+
+                // 캔버스 위에서 터치 이동 시 브라우저 스크롤 동작 강제 차단
+                const preventCanvasScroll = (e) => {
+                    if (e.touches && e.touches.length === 1) {
+                        e.preventDefault();
+                    }
+                };
+
+                // passive: false 설정으로 e.preventDefault()가 브라우저 스크롤을 방지하도록 설정
+                canvas.addEventListener('touchstart', preventCanvasScroll, { passive: false });
+                canvas.addEventListener('touchmove', preventCanvasScroll, { passive: false });
+                canvas.addEventListener('touchend', preventCanvasScroll, { passive: false });
 
                 if (value) {
+                    const ctx = canvas.getContext('2d');
                     const img = new Image();
                     img.onload = () => {
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -175,7 +187,13 @@
                     img.src = value;
                     setIsEmpty(false);
                 }
-            }, []);
+
+                return () => {
+                    canvas.removeEventListener('touchstart', preventCanvasScroll);
+                    canvas.removeEventListener('touchmove', preventCanvasScroll);
+                    canvas.removeEventListener('touchend', preventCanvasScroll);
+                };
+            }, [value]);
 
             const getPos = (e) => {
                 const canvas = canvasRef.current;
@@ -190,7 +208,6 @@
             };
 
             const startDrawing = (e) => {
-                e.preventDefault();
                 const canvas = canvasRef.current;
                 const ctx = canvas.getContext('2d');
                 const pos = getPos(e);
@@ -206,7 +223,6 @@
 
             const draw = (e) => {
                 if (!isDrawing) return;
-                e.preventDefault();
                 const canvas = canvasRef.current;
                 const ctx = canvas.getContext('2d');
                 const pos = getPos(e);
@@ -260,7 +276,8 @@
                         </div>
                     </div>
                     
-                    <div className="relative border-2 border-indigo-200 rounded-xl bg-white overflow-hidden shadow-inner touch-none">
+                    {/* style={{ touchAction: 'none' }} 적용으로 캔버스 박스 내부 필기 시 스크롤 제스처 고정 */}
+                    <div className="relative border-2 border-indigo-200 rounded-xl bg-white overflow-hidden shadow-inner" style={{ touchAction: 'none' }}>
                         {isEmpty && (
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-300 text-xs font-bold select-none">
                                 ✍️ 여백에 터치나 마우스로 손글씨 피드백을 작성하세요
@@ -278,6 +295,7 @@
                             onTouchMove={draw}
                             onTouchEnd={stopDrawing}
                             className="w-full h-28 cursor-crosshair block"
+                            style={{ touchAction: 'none' }}
                         />
                     </div>
                 </div>
