@@ -43,6 +43,50 @@
         // 탭 간 실시간 문제 동기화 채널
         const syncChannel = new BroadcastChannel('japanese_test_sync');
 
+        // 학생 키(학번+이름) 기반 4자리 전용 비밀번호(PIN) 결정적 고유 생성 함수
+        const getStudentPassword = (studentKey) => {
+            if (!studentKey) return '0000';
+            let hash = 0;
+            const seedStr = studentKey + "_jp_eval_pin_2026";
+            for (let i = 0; i < seedStr.length; i++) {
+                hash = seedStr.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const num = Math.abs(hash) % 9000 + 1000; // 1000 ~ 9999 사이 4자리 번호
+            return String(num);
+        };
+
+        // 교사용 학생 비밀번호 명단 CSV 일괄 다운로드 함수
+        const downloadPasswordListCSV = (studentData, testScores, selectedClass) => {
+            const allKeys = Array.from(new Set([...Object.keys(studentData), ...Object.keys(testScores)]))
+                .filter(k => !selectedClass || k.startsWith(selectedClass))
+                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+            if (allKeys.length === 0) {
+                alert("다운로드할 학생 데이터가 없습니다.");
+                return;
+            }
+
+            let csvContent = "\uFEFF"; // 엑셀 한글 깨짐 방지 UTF-8 BOM
+            csvContent += "학번 및 이름,개별 비밀번호 (4자리 PIN),채점 상태,최종 점수\n";
+
+            allKeys.forEach(key => {
+                const pw = getStudentPassword(key);
+                const scoreObj = testScores[key];
+                const evaluated = scoreObj ? `채점완료` : `미채점`;
+                const score = scoreObj ? `${scoreObj.score} / 8점` : `-`;
+                csvContent += `"${key}","${pw}","${evaluated}","${score}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `${selectedClass || '전체'}_학생_비밀번호_명단.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        };
+
         // 단어 뒤 붙은 조사를 자동으로 분리하는 헬퍼 함수
         const splitTextWithParticles = (text) => {
             if (!text) return [];
@@ -154,7 +198,7 @@
             window.speechSynthesis.speak(utterance);
         };
 
-        // 손글씨 피드백 작성용 캔버스 컴포넌트 (캔버스 내부 터치 시만 스크롤 고정)
+        // 손글씨 피드백 작성용 캔버스 컴포넌트
         function HandwritingCanvas({ value, onChange }) {
             const canvasRef = useRef(null);
             const [isDrawing, setIsDrawing] = useState(false);
@@ -165,14 +209,12 @@
                 const canvas = canvasRef.current;
                 if (!canvas) return;
 
-                // 캔버스 위에서 터치 이동 시 브라우저 스크롤 동작 강제 차단
                 const preventCanvasScroll = (e) => {
                     if (e.touches && e.touches.length === 1) {
                         e.preventDefault();
                     }
                 };
 
-                // passive: false 설정으로 e.preventDefault()가 브라우저 스크롤을 방지하도록 설정
                 canvas.addEventListener('touchstart', preventCanvasScroll, { passive: false });
                 canvas.addEventListener('touchmove', preventCanvasScroll, { passive: false });
                 canvas.addEventListener('touchend', preventCanvasScroll, { passive: false });
@@ -276,7 +318,6 @@
                         </div>
                     </div>
                     
-                    {/* style={{ touchAction: 'none' }} 적용으로 캔버스 박스 내부 필기 시 스크롤 제스처 고정 */}
                     <div className="relative border-2 border-indigo-200 rounded-xl bg-white overflow-hidden shadow-inner" style={{ touchAction: 'none' }}>
                         {isEmpty && (
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none text-gray-300 text-xs font-bold select-none">
@@ -318,10 +359,210 @@
                         <button onClick={() => setScreen('student-submit')} className="py-4 px-4 text-lg font-bold rounded-xl text-indigo-700 bg-indigo-100 hover:bg-indigo-200">
                             <i className="fa-solid fa-pen mr-2"></i> 동화책 제출하기
                         </button>
+                        <button onClick={() => { refreshData(); setScreen('student-result-login'); }} className="py-4 px-4 text-lg font-bold rounded-xl text-teal-800 bg-teal-100 hover:bg-teal-200 border border-teal-300 shadow-sm">
+                            <i className="fa-solid fa-graduation-cap mr-2"></i> 내 점수 & 교사 피드백 확인
+                        </button>
                         <div className="border-t border-gray-200 my-2"></div>
                         <button onClick={() => { refreshData(); setScreen('teacher-login'); }} className="py-4 px-4 text-lg font-bold rounded-xl text-white bg-gray-800 hover:bg-gray-900">
                             <i className="fa-solid fa-chalkboard-user mr-2"></i> 교사 채점 및 제출 현황 관리
                         </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // 학생 성적 & 피드백 비밀번호 조회 로그인 화면
+        function StudentResultLoginScreen({ setScreen, studentData, testScores, setLoggedInStudent }) {
+            const [selectedClass, setSelectedClass] = useState('a8반');
+            const [selectedStudentKey, setSelectedStudentKey] = useState('');
+            const [passwordInput, setPasswordInput] = useState('');
+
+            const availableStudents = Array.from(new Set([...Object.keys(studentData), ...Object.keys(testScores)]))
+                .filter(key => key.startsWith(selectedClass))
+                .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+            useEffect(() => {
+                if (availableStudents.length > 0) {
+                    setSelectedStudentKey(availableStudents[0]);
+                } else {
+                    setSelectedStudentKey('');
+                }
+            }, [selectedClass, studentData, testScores]);
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (!selectedStudentKey) return alert("학생을 선택해 주세요.");
+                
+                const realPassword = getStudentPassword(selectedStudentKey);
+                if (passwordInput.trim() === realPassword) {
+                    setLoggedInStudent(selectedStudentKey);
+                    setScreen('student-result-view');
+                } else {
+                    alert("비밀번호(4자리 PIN)가 올바르지 않습니다.");
+                }
+            };
+
+            return (
+                <div className="max-w-md mx-auto py-8">
+                    <div className="flex items-center mb-6">
+                        <button onClick={() => setScreen('home')} className="text-gray-600 font-bold"><i className="fa-solid fa-arrow-left"></i> 홈으로</button>
+                    </div>
+                    <div className="text-center mb-6">
+                        <div className="w-16 h-16 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i className="fa-solid fa-lock text-2xl"></i>
+                        </div>
+                        <h2 className="text-2xl font-black text-gray-800">내 성적 & 피드백 확인</h2>
+                        <p className="text-xs text-gray-500 font-bold mt-1">선생님이 부여한 4자리 개별 비밀번호를 입력하세요.</p>
+                    </div>
+
+                    <form onSubmit={handleLogin} className="flex flex-col gap-4 bg-gray-50 p-6 rounded-2xl border">
+                        <div>
+                            <label className="text-xs font-bold text-gray-600 mb-1 block">반 선택</label>
+                            <div className="flex gap-1 overflow-x-auto pb-1">
+                                {CLASS_OPTIONS.map(c => (
+                                    <button 
+                                        type="button"
+                                        key={c} 
+                                        onClick={() => setSelectedClass(c)} 
+                                        className={`px-3 py-1.5 rounded-lg font-bold text-xs ${selectedClass === c ? 'bg-teal-600 text-white' : 'bg-white border text-gray-700'}`}
+                                    >
+                                        {c}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold text-gray-600 mb-1 block">학생 선택</label>
+                            {availableStudents.length > 0 ? (
+                                <select 
+                                    value={selectedStudentKey} 
+                                    onChange={e => setSelectedStudentKey(e.target.value)}
+                                    className="w-full border rounded-xl p-3 font-bold bg-white"
+                                >
+                                    {availableStudents.map(k => <option key={k} value={k}>{k}</option>)}
+                                </select>
+                            ) : (
+                                <p className="text-xs text-red-500 font-bold p-2 bg-red-50 rounded-lg">해당 반에 등록된 학생 데이터가 없습니다.</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="text-xs font-bold text-gray-600 mb-1 block">개별 비밀번호 (4자리 PIN)</label>
+                            <input 
+                                type="password" 
+                                maxLength={4}
+                                placeholder="4자리 비밀번호" 
+                                value={passwordInput} 
+                                onChange={e => setPasswordInput(e.target.value)} 
+                                className="w-full border rounded-xl p-3 text-center text-xl font-black tracking-widest bg-white" 
+                            />
+                        </div>
+
+                        <button 
+                            type="submit" 
+                            disabled={!selectedStudentKey}
+                            className="bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl shadow-md transition-all mt-2"
+                        >
+                            결과 및 손글씨 피드백 확인하기
+                        </button>
+                    </form>
+                </div>
+            );
+        }
+
+        // 학생 개별 성적 및 손글씨 피드백 상세보기 화면
+        function StudentResultViewScreen({ setScreen, studentKey, testScores }) {
+            const resultData = testScores[studentKey];
+
+            if (!resultData) {
+                return (
+                    <div className="max-w-lg mx-auto py-12 text-center">
+                        <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i className="fa-solid fa-clock-rotate-left text-2xl"></i>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">{studentKey}</h3>
+                        <p className="text-gray-500 font-medium text-sm mb-6">아직 채점이 완료되지 않았습니다.<br/>선생님의 평가 완료 후 다시 확인해 주세요.</p>
+                        <button onClick={() => setScreen('home')} className="bg-gray-800 text-white px-6 py-2.5 rounded-xl font-bold text-sm">
+                            홈으로 돌아가기
+                        </button>
+                    </div>
+                );
+            }
+
+            return (
+                <div className="max-w-2xl mx-auto py-4">
+                    <div className="flex justify-between items-center mb-6 border-b pb-4">
+                        <button onClick={() => setScreen('home')} className="text-gray-600 font-bold text-sm"><i className="fa-solid fa-arrow-left"></i> 홈으로</button>
+                        <h2 className="text-xl font-black text-gray-800">채점 결과 & 교사 피드백</h2>
+                        <div></div>
+                    </div>
+
+                    <div className="bg-gradient-to-r from-teal-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg mb-6 flex justify-between items-center">
+                        <div>
+                            <span className="text-xs font-bold bg-white/20 px-3 py-1 rounded-full uppercase tracking-wider">수행평가 결과표</span>
+                            <h3 className="text-2xl font-black mt-1">{studentKey}</h3>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-xs text-teal-100 font-bold">최종 점수</p>
+                            <p className="text-4xl font-black">{resultData.score} <span className="text-lg text-teal-200">/ 8 점</span></p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        {(resultData.details || []).map((item, qIdx) => (
+                            <div key={qIdx} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                                <div className="flex justify-between items-center border-b pb-3 mb-3">
+                                    <span className="bg-indigo-100 text-indigo-800 font-black text-xs px-2.5 py-1 rounded-md">
+                                        셋트 {qIdx + 1}
+                                    </span>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-black ${
+                                        item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'bg-green-100 text-green-800' : 
+                                        item.markType === 'partial' ? 'bg-amber-100 text-amber-800' : 
+                                        'bg-red-100 text-red-800'
+                                    }`}>
+                                        {item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'O 정답 (1점)' : 
+                                         item.markType === 'partial' ? '△ 부분 오답 (0.5점)' : 
+                                         'X 오답 (0점)'}
+                                    </span>
+                                </div>
+
+                                <div className="text-sm font-bold text-gray-800 mb-3 whitespace-pre-line bg-gray-50 p-3 rounded-xl border">
+                                    {item.ko}
+                                </div>
+
+                                {item.wrongWords && item.wrongWords.length > 0 && (
+                                    <div className="mb-3 p-2.5 bg-red-50 rounded-xl border border-red-100 text-xs">
+                                        <span className="font-bold text-red-700 mr-2">⚠️ 지적받은 발음/표현 단어:</span>
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                            {item.wrongWords.map((w, wI) => (
+                                                <span key={wI} className="bg-red-200 text-red-900 font-bold px-2 py-0.5 rounded line-through">
+                                                    {w}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {item.audioDataUrl && (
+                                    <div className="mb-3 bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
+                                        <p className="text-xs font-bold text-indigo-900 mb-1 flex items-center gap-1">
+                                            <i className="fa-solid fa-microphone text-indigo-600"></i> 제출된 녹음 발음:
+                                        </p>
+                                        <audio controls src={item.audioDataUrl} className="w-full h-8 rounded" />
+                                    </div>
+                                )}
+
+                                {item.handwritingFeedback && (
+                                    <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-200">
+                                        <p className="text-xs font-bold text-amber-900 mb-1 flex items-center gap-1">
+                                            <i className="fa-solid fa-pen-nib text-amber-600"></i> 선생님 손글씨 피드백:
+                                        </p>
+                                        <img src={item.handwritingFeedback} alt="선생님 손글씨 피드백" className="max-h-36 border rounded-lg bg-white p-1" />
+                                    </div>
+                                )}
+                            </div>
+                        ))}
                     </div>
                 </div>
             );
@@ -603,12 +844,20 @@
                         <button onClick={() => setActiveTab('results')} className={`flex-1 py-2 font-bold rounded-md ${activeTab === 'results' ? 'bg-white text-indigo-600 shadow' : 'text-gray-500'}`}>채점 결과 & 피드백 확인</button>
                     </div>
 
-                    <div className="flex gap-2 mb-3 overflow-x-auto pb-1">
-                        {CLASS_OPTIONS.map(c => (
-                            <button key={c} onClick={() => setSelectedClass(c)} className={`px-4 py-1.5 rounded-full font-bold text-sm ${selectedClass === c ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
-                                {c}
-                            </button>
-                        ))}
+                    <div className="flex justify-between items-center mb-3 gap-2">
+                        <div className="flex gap-2 overflow-x-auto pb-1">
+                            {CLASS_OPTIONS.map(c => (
+                                <button key={c} onClick={() => setSelectedClass(c)} className={`px-4 py-1.5 rounded-full font-bold text-sm shrink-0 ${selectedClass === c ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}>
+                                    {c}
+                                </button>
+                            ))}
+                        </div>
+                        <button 
+                            onClick={() => downloadPasswordListCSV(studentData, testScores, selectedClass)}
+                            className="shrink-0 bg-green-700 hover:bg-green-800 text-white text-xs font-bold px-3 py-2 rounded-xl shadow transition-all flex items-center gap-1.5"
+                        >
+                            <i className="fa-solid fa-file-csv text-sm"></i> {selectedClass} 비밀번호 명단 다운로드
+                        </button>
                     </div>
 
                     <div className="relative mb-4">
@@ -631,13 +880,19 @@
                         <div className="bg-white rounded-xl border divide-y">
                             {classSubmitted.length > 0 ? classSubmitted.map((stKey, idx) => {
                                 const isEvaluated = !!testScores[stKey];
+                                const studentPw = getStudentPassword(stKey);
                                 return (
                                     <div key={idx} className="p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                                         <div>
                                             <p className="font-bold text-gray-800">{stKey}</p>
-                                            <span className={`text-xs px-2 py-0.5 rounded font-bold ${isEvaluated ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                {isEvaluated ? `채점완료 (${testScores[stKey].score} / 8점)` : '채점 대기중 (8셋트)'}
-                                            </span>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <span className={`text-xs px-2 py-0.5 rounded font-bold ${isEvaluated ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                    {isEvaluated ? `채점완료 (${testScores[stKey].score} / 8점)` : '채점 대기중 (8셋트)'}
+                                                </span>
+                                                <span className="text-xs font-extrabold bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
+                                                    <i className="fa-solid fa-key text-amber-600 text-[10px]"></i> PW: {studentPw}
+                                                </span>
+                                            </div>
                                         </div>
                                         <div className="flex gap-2 w-full sm:w-auto">
                                             <button onClick={() => startTest(stKey)} className="flex-1 sm:flex-none bg-indigo-600 text-white px-3 py-2 rounded-lg font-bold text-xs shadow hover:bg-indigo-700">
@@ -657,10 +912,16 @@
                         <div className="flex flex-col gap-4">
                             {sortedEvaluatedKeys.length > 0 ? sortedEvaluatedKeys.map((stKey, idx) => {
                                 const res = testScores[stKey];
+                                const studentPw = getStudentPassword(stKey);
                                 return (
                                     <div key={idx} className="bg-white p-4 rounded-xl border shadow-sm">
                                         <div className="flex justify-between items-center mb-3 border-b pb-2">
-                                            <h3 className="font-bold text-lg text-gray-800">{stKey}</h3>
+                                            <div>
+                                                <h3 className="font-bold text-lg text-gray-800">{stKey}</h3>
+                                                <span className="text-xs font-extrabold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                                                    비밀번호: {studentPw}
+                                                </span>
+                                            </div>
                                             <span className="text-xl font-black text-indigo-600">{res.score} / 8 점</span>
                                         </div>
                                         <div className="space-y-3">
@@ -830,7 +1091,6 @@
             );
         }
 
-        // 모든 문제를 한 화면에서 채점하고 손글씨 피드백을 작성하는 채점 화면
         function TestRunScreen({ setScreen, testQuestions, studentName, refreshData, testScores }) {
             const existingData = testScores[studentName]?.details || [];
 
@@ -862,7 +1122,6 @@
             const mediaRecorderRef = useRef(null);
             const audioChunksRef = useRef([]);
 
-            // 실시간 총점 계산 (정답 1점, 부분오답 0.5점, 오답 0점)
             const totalScore = marks.reduce((acc, m) => acc + (m === 'correct' ? 1 : m === 'partial' ? 0.5 : 0), 0);
 
             const setMarkForQ = (qIdx, markType) => {
@@ -981,7 +1240,6 @@
 
             return (
                 <div className="max-w-2xl mx-auto py-2">
-                    {/* 상단 핀 고정 대시보드 헤더 */}
                     <div className="sticky top-0 bg-white/95 backdrop-blur z-20 pb-3 border-b mb-6 shadow-sm">
                         <div className="flex justify-between items-center mb-3 pt-2">
                             <button onClick={() => setScreen('teacher-dashboard')} className="text-gray-600 font-bold text-sm hover:text-gray-900">
@@ -995,7 +1253,6 @@
                             </div>
                         </div>
 
-                        {/* 문제 빠른 이동 및 채점 현황 바 */}
                         <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                             {testQuestions.map((q, qIdx) => {
                                 const m = marks[qIdx];
@@ -1014,7 +1271,6 @@
                         </div>
                     </div>
 
-                    {/* 전체 8개 문제 카드가 한 화면에 일렬로 나열됨 */}
                     <div className="space-y-6">
                         {testQuestions.map((current, qIdx) => {
                             const wordList = splitTextWithParticles(current.ko);
@@ -1036,7 +1292,6 @@
                                         </button>
                                     </div>
 
-                                    {/* 문장 및 틀린 단어 원터치 선택 */}
                                     <div className="mb-3">
                                         <p className="text-[11px] text-gray-400 font-bold mb-1.5 text-left">
                                             💡 발음이나 표현이 틀린 단어를 클릭하면 취소선이 그어집니다.
@@ -1062,7 +1317,6 @@
                                         </div>
                                     </div>
 
-                                    {/* 교사용 정답 토글 */}
                                     <div className="mb-3 text-left">
                                         <button onClick={() => toggleAnswerForQ(qIdx)} className="text-xs text-indigo-600 font-bold underline mb-1">
                                             {showAnswerPerQ[qIdx] ? '정답 숨기기' : '🔒 교사용 정답 및 발음 확인'}
@@ -1074,7 +1328,6 @@
                                         )}
                                     </div>
 
-                                    {/* O / △ / X 선택 버튼 */}
                                     <div className="grid grid-cols-3 gap-2 mb-4">
                                         <button
                                             onClick={() => setMarkForQ(qIdx, 'correct')}
@@ -1108,7 +1361,6 @@
                                         </button>
                                     </div>
 
-                                    {/* 학생 개별 발음 녹음 */}
                                     <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 mb-3 flex flex-col items-center gap-2">
                                         <div className="flex justify-between items-center w-full">
                                             <span className="text-xs font-bold text-indigo-900">
@@ -1129,7 +1381,6 @@
                                         )}
                                     </div>
 
-                                    {/* 손글씨 피드백 작성 캔버스 */}
                                     <HandwritingCanvas
                                         value={feedbackPerQ[qIdx]}
                                         onChange={(dataUrl) => handleFeedbackChange(qIdx, dataUrl)}
@@ -1139,7 +1390,6 @@
                         })}
                     </div>
 
-                    {/* 하단 최종 제출 버튼 */}
                     <div className="mt-8 pt-4 border-t sticky bottom-4 bg-white/90 backdrop-blur p-4 rounded-2xl shadow-xl border z-20">
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-sm font-bold text-gray-700">최종 채점 합계:</span>
@@ -1164,6 +1414,7 @@
             const [testScores, setTestScores] = useState({});
             const [isLoading, setIsLoading] = useState(false);
             const [selectedStudent, setSelectedStudent] = useState('');
+            const [loggedInStudent, setLoggedInStudent] = useState('');
             const [testQuestions, setTestQuestions] = useState([]);
             const [selectedClass, setSelectedClass] = useState('a8반');
 
@@ -1190,6 +1441,8 @@
                         {screen === 'home' && <HomeScreen setScreen={setScreen} refreshData={refreshData} isLoading={isLoading} />}
                         {screen === 'practice' && <PracticeScreen setScreen={setScreen} />}
                         {screen === 'student-submit' && <StudentSubmitScreen setScreen={setScreen} refreshData={refreshData} />}
+                        {screen === 'student-result-login' && <StudentResultLoginScreen setScreen={setScreen} studentData={studentData} testScores={testScores} setLoggedInStudent={setLoggedInStudent} />}
+                        {screen === 'student-result-view' && <StudentResultViewScreen setScreen={setScreen} studentKey={loggedInStudent} testScores={testScores} />}
                         {screen === 'teacher-login' && <TeacherLoginScreen setScreen={setScreen} />}
                         {screen === 'teacher-dashboard' && <TeacherDashboardScreen setScreen={setScreen} studentData={studentData} testScores={testScores} setSelectedStudent={setSelectedStudent} setTestQuestions={setTestQuestions} selectedClass={selectedClass} setSelectedClass={setSelectedClass} />}
                         {screen === 'test-run' && <TestRunScreen setScreen={setScreen} testQuestions={testQuestions} studentName={selectedStudent} refreshData={refreshData} testScores={testScores} />}
