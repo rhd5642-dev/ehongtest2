@@ -516,11 +516,21 @@
                                         </div>
                                         <div className="space-y-3">
                                             {(res.details || []).map((item, qIdx) => (
-                                                <div key={qIdx} className={`p-3 rounded-lg text-xs font-bold border ${item.isCorrect ? 'bg-green-50 border-green-200 text-green-900' : 'bg-red-50 border-red-200 text-red-900'}`}>
+                                                <div key={qIdx} className={`p-3 rounded-lg text-xs font-bold border ${
+                                                    item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'bg-green-50 border-green-200 text-green-900' : 
+                                                    item.markType === 'partial' ? 'bg-yellow-50 border-yellow-200 text-yellow-900' : 
+                                                    'bg-red-50 border-red-200 text-red-900'
+                                                }`}>
                                                     <div className="flex justify-between items-start">
                                                         <span className="whitespace-pre-line leading-relaxed text-sm">셋트 {qIdx+1}.\n{item.ko}</span>
-                                                        <span className={`shrink-0 ml-2 px-2 py-0.5 rounded text-[11px] font-black ${item.isCorrect ? 'bg-green-600 text-white' : 'bg-red-500 text-white'}`}>
-                                                            {item.isCorrect ? 'O 정답' : 'X 오답'}
+                                                        <span className={`shrink-0 ml-2 px-2 py-0.5 rounded text-[11px] font-black ${
+                                                            item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'bg-green-600 text-white' : 
+                                                            item.markType === 'partial' ? 'bg-yellow-500 text-white' : 
+                                                            'bg-red-500 text-white'
+                                                        }`}>
+                                                            {item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'O 정답' : 
+                                                             item.markType === 'partial' ? '△ 부분 오답' : 
+                                                             'X 완전 오답'}
                                                         </span>
                                                     </div>
 
@@ -735,7 +745,30 @@
                 }
             };
 
-            const handleMark = async (isCorrect) => {
+            // 이전 문제로 되돌리기 함수 추가
+            const handlePrevious = () => {
+                if (testDetails.length === 0) return;
+                
+                const lastRecord = testDetails[testDetails.length - 1];
+                let scoreToSubtract = 0;
+                
+                if (lastRecord.markType === 'correct') scoreToSubtract = 1;
+                else if (lastRecord.markType === 'partial') scoreToSubtract = 0.5;
+                // 이전 기록 호환용
+                else if (lastRecord.isCorrect && !lastRecord.markType) scoreToSubtract = 1;
+
+                setScore(prev => prev - scoreToSubtract);
+                setTestDetails(prev => prev.slice(0, -1));
+                
+                changeQuestionIndex(idx - 1);
+                setWrongWordIndices([]);
+                setAudioUrl(null);
+                setAudioBase64(null);
+                setShowAnswer(false);
+            };
+
+            // 채점 함수 수정 (markType: 'correct', 'partial', 'wrong' 받음)
+            const handleMark = async (markType) => {
                 if (isMarking) return;
                 setIsMarking(true);
 
@@ -747,17 +780,23 @@
                 const words = splitTextWithParticles(current.ko);
                 const markedWrongWords = wrongWordIndices.map(i => words[i]);
 
+                let addedScore = 0;
+                if (markType === 'correct') addedScore = 1;
+                else if (markType === 'partial') addedScore = 0.5;
+
                 const currentRecord = {
                     ko: current.ko,
                     jp: current.jp,
-                    isCorrect: isCorrect,
+                    isCorrect: markType === 'correct', // 호환용
+                    markType: markType, // 'correct', 'partial', 'wrong' 추가
                     wrongWords: markedWrongWords,
                     audioDataUrl: audioBase64
                 };
+                
                 const updatedDetails = [...testDetails, currentRecord];
                 setTestDetails(updatedDetails);
 
-                const nextScore = isCorrect ? score + 1 : score;
+                const nextScore = score + addedScore;
                 setScore(nextScore);
 
                 setAudioUrl(null);
@@ -849,20 +888,38 @@
                         {audioUrl && <audio controls src={audioUrl} className="w-full mt-2 h-8" />}
                     </div>
 
-                    <div className="flex gap-4">
+                    {/* 채점 버튼을 3개로 분리 및 이전으로 버튼 추가 */}
+                    <div className="flex flex-col gap-3">
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={() => handleMark('wrong')} 
+                                disabled={isMarking} 
+                                className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl text-lg transition-all"
+                            >
+                                X (완전 오답)
+                            </button>
+                            <button 
+                                onClick={() => handleMark('partial')} 
+                                disabled={isMarking} 
+                                className="flex-1 bg-yellow-500 hover:bg-yellow-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl text-lg transition-all"
+                            >
+                                △ (부분 오답)
+                            </button>
+                            <button 
+                                onClick={() => handleMark('correct')} 
+                                disabled={isMarking} 
+                                className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold py-4 rounded-xl text-lg transition-all"
+                            >
+                                O (정답)
+                            </button>
+                        </div>
+                        
                         <button 
-                            onClick={() => handleMark(false)} 
-                            disabled={isMarking} 
-                            className="flex-1 bg-red-500 hover:bg-red-600 disabled:opacity-50 text-white font-bold py-5 rounded-xl text-2xl transition-all"
+                            onClick={handlePrevious} 
+                            disabled={isMarking || testDetails.length === 0} 
+                            className="w-full bg-gray-400 hover:bg-gray-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
                         >
-                            X (오답)
-                        </button>
-                        <button 
-                            onClick={() => handleMark(true)} 
-                            disabled={isMarking} 
-                            className="flex-1 bg-green-500 hover:bg-green-600 disabled:opacity-50 text-white font-bold py-5 rounded-xl text-2xl transition-all"
-                        >
-                            O (정답)
+                            <i className="fa-solid fa-arrow-rotate-left"></i> 이전 문제 다시 채점하기
                         </button>
                     </div>
                 </div>
