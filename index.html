@@ -36,14 +36,11 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // 구글 앱스 스크립트(GAS) 웹 앱 URL
         const GAS_URL = "https://script.google.com/macros/s/AKfycbwvtqNgQOHNCqMXhnX8L_FOQyoIDKJJ6ubrjX0XZV5-ftzaPRVK_d784gkPyUBc2XIjRA/exec";
         const CLASS_OPTIONS = ['a8반', 'b7반', 'c6반', 'e1반'];
 
-        // 탭 간 실시간 문제 동기화 채널
         const syncChannel = new BroadcastChannel('japanese_test_sync');
 
-        // 학생 키(학번+이름) 기반 4자리 전용 비밀번호(PIN) 결정적 고유 생성 함수
         const getStudentPassword = (studentKey) => {
             if (!studentKey) return '0000';
             let hash = 0;
@@ -55,7 +52,6 @@
             return String(num);
         };
 
-        // 교사용 학생 비밀번호 명단 CSV 일괄 다운로드 함수
         const downloadPasswordListCSV = (studentData, testScores, selectedClass) => {
             const allKeys = Array.from(new Set([...Object.keys(studentData), ...Object.keys(testScores)]))
                 .filter(k => !selectedClass || k.startsWith(selectedClass))
@@ -87,7 +83,6 @@
             document.body.removeChild(link);
         };
 
-        // 단어 뒤 붙은 조사를 자동으로 분리하는 헬퍼 함수
         const splitTextWithParticles = (text) => {
             if (!text) return [];
             const separated = text.replace(/([가-힣A-Za-z0-9]+)(에서|부터|까지|으로|은|는|이|가|을|를|로|에|과|와|도|만)(?=\s|[?.,!]|$)/g, '$1 $2');
@@ -198,7 +193,6 @@
             window.speechSynthesis.speak(utterance);
         };
 
-        // 손글씨 피드백 작성용 캔버스 컴포넌트
         function HandwritingCanvas({ value, onChange }) {
             const canvasRef = useRef(null);
             const [isDrawing, setIsDrawing] = useState(false);
@@ -371,7 +365,6 @@
             );
         }
 
-        // 학생 성적 & 피드백 비밀번호 조회 로그인 화면
         function StudentResultLoginScreen({ setScreen, studentData, testScores, setLoggedInStudent }) {
             const [selectedClass, setSelectedClass] = useState('a8반');
             const [selectedStudentKey, setSelectedStudentKey] = useState('');
@@ -471,7 +464,6 @@
             );
         }
 
-        // 학생 개별 성적 및 손글씨 피드백 상세보기 화면
         function StudentResultViewScreen({ setScreen, studentKey, testScores }) {
             const resultData = testScores[studentKey];
 
@@ -683,8 +675,7 @@
                     setScreen('home');
                 } catch (err) {
                     alert("제출 중 오류 발생: " + err.message);
-                } font-bold
-                finally {
+                } finally {
                     setIsSubmitting(false);
                 }
             };
@@ -1212,7 +1203,6 @@
 
             return (
                 <div className="max-w-2xl mx-auto py-2">
-                    {/* 상단 고정 헤더 */}
                     <div className="sticky top-0 bg-white/95 backdrop-blur z-20 pb-3 border-b mb-6 shadow-sm">
                         <div className="flex justify-between items-center mb-3 pt-2">
                             <button onClick={() => setScreen('teacher-dashboard')} className="text-gray-600 font-bold text-sm hover:text-gray-900">
@@ -1220,7 +1210,6 @@
                             </button>
                             <span className="font-extrabold text-indigo-900 text-lg">{studentName} 전체 채점</span>
                             
-                            {/* 총점 직접 입력 부분 */}
                             <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-xl">
                                 <span className="text-xs font-bold text-indigo-800">총점:</span>
                                 <input 
@@ -1236,7 +1225,6 @@
                             </div>
                         </div>
 
-                        {/* 1회 클릭 통합 전체 녹음 컨트롤 */}
                         <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 rounded-xl border border-indigo-100 flex flex-col sm:flex-row items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
                                 <span className="text-xs font-bold text-indigo-900 flex items-center gap-1">
@@ -1268,7 +1256,6 @@
                             </div>
                         )}
 
-                        {/* 문제 빠르게 가기 버튼 바 */}
                         <div className="flex gap-1.5 overflow-x-auto pt-3 scrollbar-none">
                             {testQuestions.map((q, qIdx) => (
                                 <button
@@ -1282,7 +1269,6 @@
                         </div>
                     </div>
 
-                    {/* 문제 카드 목록 */}
                     <div className="space-y-6">
                         {testQuestions.map((current, qIdx) => {
                             const wordList = splitTextWithParticles(current.ko);
@@ -1348,7 +1334,6 @@
                         })}
                     </div>
 
-                    {/* 하단 총점 및 구글 시트 저장 바 */}
                     <div className="mt-8 pt-4 border-t sticky bottom-4 bg-white/90 backdrop-blur p-4 rounded-2xl shadow-xl border z-20">
                         <div className="flex justify-between items-center mb-3">
                             <span className="text-sm font-bold text-gray-700">입력된 최종 총점:</span>
