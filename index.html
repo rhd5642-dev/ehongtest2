@@ -51,7 +51,7 @@
             for (let i = 0; i < seedStr.length; i++) {
                 hash = seedStr.charCodeAt(i) + ((hash << 5) - hash);
             }
-            const num = Math.abs(hash) % 9000 + 1000; // 1000 ~ 9999 사이 4자리 번호
+            const num = Math.abs(hash) % 9000 + 1000;
             return String(num);
         };
 
@@ -66,14 +66,14 @@
                 return;
             }
 
-            let csvContent = "\uFEFF"; // 엑셀 한글 깨짐 방지 UTF-8 BOM
+            let csvContent = "\uFEFF";
             csvContent += "학번 및 이름,개별 비밀번호 (4자리 PIN),채점 상태,최종 점수\n";
 
             allKeys.forEach(key => {
                 const pw = getStudentPassword(key);
                 const scoreObj = testScores[key];
                 const evaluated = scoreObj ? `채점완료` : `미채점`;
-                const score = scoreObj ? `${scoreObj.score} / 8점` : `-`;
+                const score = scoreObj ? `${scoreObj.score}점` : `-`;
                 csvContent += `"${key}","${pw}","${evaluated}","${score}"\n`;
             });
 
@@ -161,7 +161,7 @@
             { q_ko: "돌로 무엇 만들어?", q_jp: "いしで なに つくる [이시데 나니 츠쿠루]", a_ko: "돌로 철 만들어", a_jp: "いしで てつ つくる [이시데 테츠 츠쿠루]" },
             { q_ko: "철로 무엇 만들어?", q_jp: "てつで なに つくる [테츠데 나니 츠쿠루]", a_ko: "철로 가위 만들어", a_jp: "てつで はさみ つくる [테츠데 하사미 츠쿠루]" },
             { q_ko: "가위로 무엇 만들어?", q_jp: "はさみで なに つくる [하사데 나니 츠쿠루]", a_ko: "가위로 오린 것 만들어", a_jp: "はさみで きりぬき つくる [하사미데 키리누키 츠쿠루]" },
-            { q_ko: "오린 것으로 무엇 만들어?", q_jp: "きりぬきで なに つくる [키리ぬき데 나니 츠쿠루]", a_ko: "오린 것으로 그림책 만들어", a_jp: "きりぬきで えほん つくる [키리누키데 에혼 츠쿠루]" },
+            { q_ko: "오린 것으로 무엇 만들어?", q_jp: "きりぬきで なに つくる [키리ぬき데 나니 츠쿠루]", a_ko: "오린 것으로 그림책 만들어", a_jp: "きりぬきで えほん つくる [키리ぬき데 에혼 츠쿠루]" },
             { q_ko: "물은 무엇 만들어?", q_jp: "みずは なに つくる [미즈와 나니 츠쿠루]", a_ko: "물은 강 만들어", a_jp: "みずは かわ つくる [미즈와 카와 츠쿠루]" },
             { q_ko: "강으로 무엇 만들어?", q_jp: "かわで なに つくる [카와데 나니 츠쿠루]", a_ko: "강으로 댐 만들어", a_jp: "かわで ダム つくる [카와데 다무 츠쿠루]" },
             { q_ko: "댐으로 무엇 만들어?", q_jp: "ダムで なに つくる [다무데 나니 츠쿠루]", a_ko: "댐으로 전기 만들어", a_jp: "ダムで でんき つくる [다무데 키 츠쿠루]" },
@@ -490,6 +490,8 @@
                 );
             }
 
+            const audioUrl = resultData.globalAudioDataUrl || resultData.audioDataUrl;
+
             return (
                 <div className="max-w-2xl mx-auto py-4">
                     <div className="flex justify-between items-center mb-6 border-b pb-4">
@@ -504,10 +506,19 @@
                             <h3 className="text-2xl font-black mt-1">{studentKey}</h3>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-teal-100 font-bold">최종 점수</p>
-                            <p className="text-4xl font-black">{resultData.score} <span className="text-lg text-teal-200">/ 8 점</span></p>
+                            <p className="text-xs text-teal-100 font-bold">최종 총점</p>
+                            <p className="text-4xl font-black">{resultData.score} <span className="text-lg text-teal-200">점</span></p>
                         </div>
                     </div>
+
+                    {audioUrl && (
+                        <div className="mb-6 bg-indigo-50/80 p-4 rounded-2xl border border-indigo-200 shadow-sm">
+                            <p className="text-xs font-bold text-indigo-900 mb-2 flex items-center gap-1.5">
+                                <i className="fa-solid fa-microphone text-indigo-600 text-sm"></i> 제출/녹음된 전체 수행평가 음성:
+                            </p>
+                            <audio controls src={audioUrl} className="w-full h-10 rounded-lg" />
+                        </div>
+                    )}
 
                     <div className="space-y-4">
                         {(resultData.details || []).map((item, qIdx) => (
@@ -515,15 +526,6 @@
                                 <div className="flex justify-between items-center border-b pb-3 mb-3">
                                     <span className="bg-indigo-100 text-indigo-800 font-black text-xs px-2.5 py-1 rounded-md">
                                         셋트 {qIdx + 1}
-                                    </span>
-                                    <span className={`px-3 py-1 rounded-full text-xs font-black ${
-                                        item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'bg-green-100 text-green-800' : 
-                                        item.markType === 'partial' ? 'bg-amber-100 text-amber-800' : 
-                                        'bg-red-100 text-red-800'
-                                    }`}>
-                                        {item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'O 정답 (1점)' : 
-                                         item.markType === 'partial' ? '△ 부분 오답 (0.5점)' : 
-                                         'X 오답 (0점)'}
                                     </span>
                                 </div>
 
@@ -541,15 +543,6 @@
                                                 </span>
                                             ))}
                                         </div>
-                                    </div>
-                                )}
-
-                                {item.audioDataUrl && (
-                                    <div className="mb-3 bg-indigo-50/60 p-3 rounded-xl border border-indigo-100">
-                                        <p className="text-xs font-bold text-indigo-900 mb-1 flex items-center gap-1">
-                                            <i className="fa-solid fa-microphone text-indigo-600"></i> 제출된 녹음 발음:
-                                        </p>
-                                        <audio controls src={item.audioDataUrl} className="w-full h-8 rounded" />
                                     </div>
                                 )}
 
@@ -690,7 +683,8 @@
                     setScreen('home');
                 } catch (err) {
                     alert("제출 중 오류 발생: " + err.message);
-                } finally {
+                } font-bold
+                finally {
                     setIsSubmitting(false);
                 }
             };
@@ -887,7 +881,7 @@
                                             <p className="font-bold text-gray-800">{stKey}</p>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className={`text-xs px-2 py-0.5 rounded font-bold ${isEvaluated ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                                    {isEvaluated ? `채점완료 (${testScores[stKey].score} / 8점)` : '채점 대기중 (8셋트)'}
+                                                    {isEvaluated ? `채점완료 (${testScores[stKey].score}점)` : '채점 대기중'}
                                                 </span>
                                                 <span className="text-xs font-extrabold bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded flex items-center gap-1">
                                                     <i className="fa-solid fa-key text-amber-600 text-[10px]"></i> PW: {studentPw}
@@ -913,6 +907,7 @@
                             {sortedEvaluatedKeys.length > 0 ? sortedEvaluatedKeys.map((stKey, idx) => {
                                 const res = testScores[stKey];
                                 const studentPw = getStudentPassword(stKey);
+                                const audioUrl = res.globalAudioDataUrl || res.audioDataUrl;
                                 return (
                                     <div key={idx} className="bg-white p-4 rounded-xl border shadow-sm">
                                         <div className="flex justify-between items-center mb-3 border-b pb-2">
@@ -922,26 +917,23 @@
                                                     비밀번호: {studentPw}
                                                 </span>
                                             </div>
-                                            <span className="text-xl font-black text-indigo-600">{res.score} / 8 점</span>
+                                            <span className="text-xl font-black text-indigo-600">{res.score} 점</span>
                                         </div>
+
+                                        {audioUrl && (
+                                            <div className="mb-3 p-3 bg-indigo-50/60 rounded-xl border border-indigo-100">
+                                                <p className="text-xs font-bold text-indigo-900 mb-1 flex items-center gap-1">
+                                                    <i className="fa-solid fa-microphone text-indigo-600"></i> 전체 녹음된 학생 음성:
+                                                </p>
+                                                <audio controls src={audioUrl} className="w-full h-8 rounded" />
+                                            </div>
+                                        )}
+
                                         <div className="space-y-3">
                                             {(res.details || []).map((item, qIdx) => (
-                                                <div key={qIdx} className={`p-3 rounded-lg text-xs font-bold border ${
-                                                    item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'bg-green-50 border-green-200 text-green-900' : 
-                                                    item.markType === 'partial' ? 'bg-yellow-50 border-yellow-200 text-yellow-900' : 
-                                                    'bg-red-50 border-red-200 text-red-900'
-                                                }`}>
+                                                <div key={qIdx} className="p-3 rounded-lg text-xs font-bold border bg-gray-50 border-gray-200 text-gray-900">
                                                     <div className="flex justify-between items-start">
                                                         <span className="whitespace-pre-line leading-relaxed text-sm">셋트 {qIdx+1}.\n{item.ko}</span>
-                                                        <span className={`shrink-0 ml-2 px-2 py-0.5 rounded text-[11px] font-black ${
-                                                            item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'bg-green-600 text-white' : 
-                                                            item.markType === 'partial' ? 'bg-yellow-500 text-white' : 
-                                                            'bg-red-500 text-white'
-                                                        }`}>
-                                                            {item.markType === 'correct' || (item.isCorrect && !item.markType) ? 'O 정답 (1점)' : 
-                                                             item.markType === 'partial' ? '△ 부분 오답 (0.5점)' : 
-                                                             'X 완전 오답 (0점)'}
-                                                        </span>
                                                     </div>
 
                                                     {item.wrongWords && item.wrongWords.length > 0 && (
@@ -950,15 +942,6 @@
                                                             {item.wrongWords.map((w, wI) => (
                                                                 <span key={wI} className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded line-through">{w}</span>
                                                             ))}
-                                                        </div>
-                                                    )}
-
-                                                    {item.audioDataUrl && (
-                                                        <div className="mt-2 pt-2 border-t border-gray-200">
-                                                            <p className="text-[11px] text-indigo-700 font-bold mb-1 flex items-center gap-1">
-                                                                <i className="fa-solid fa-microphone text-indigo-500"></i> 녹음된 학생 발음 재생:
-                                                            </p>
-                                                            <audio controls src={item.audioDataUrl} className="w-full h-8 rounded" />
                                                         </div>
                                                     )}
 
@@ -1093,10 +1076,11 @@
 
         function TestRunScreen({ setScreen, testQuestions, studentName, refreshData, testScores }) {
             const existingData = testScores[studentName]?.details || [];
+            const existingScore = testScores[studentName]?.score ?? 8;
+            const existingAudio = testScores[studentName]?.globalAudioDataUrl || testScores[studentName]?.audioDataUrl || null;
 
-            const [marks, setMarks] = useState(() => 
-                testQuestions.map((_, i) => existingData[i] ? existingData[i].markType || (existingData[i].isCorrect ? 'correct' : 'wrong') : 'correct')
-            );
+            const [totalScore, setTotalScore] = useState(existingScore);
+
             const [wrongWordsPerQ, setWrongWordsPerQ] = useState(() => 
                 testQuestions.map((q, i) => {
                     if (existingData[i] && existingData[i].wrongWords) {
@@ -1106,29 +1090,18 @@
                     return [];
                 })
             );
-            const [recordingsPerQ, setRecordingsPerQ] = useState(() => 
-                testQuestions.map((_, i) => ({ 
-                    audioUrl: existingData[i]?.audioDataUrl || null, 
-                    audioBase64: existingData[i]?.audioDataUrl || null 
-                }))
-            );
+
+            const [globalAudio, setGlobalAudio] = useState({ audioUrl: existingAudio, audioBase64: existingAudio });
+            const [isRecording, setIsRecording] = useState(false);
+
             const [feedbackPerQ, setFeedbackPerQ] = useState(() => 
                 testQuestions.map((_, i) => existingData[i]?.handwritingFeedback || null)
             );
             const [showAnswerPerQ, setShowAnswerPerQ] = useState(() => testQuestions.map(() => false));
-            const [recordingQIdx, setRecordingQIdx] = useState(null);
             const [isSaving, setIsSaving] = useState(false);
 
             const mediaRecorderRef = useRef(null);
             const audioChunksRef = useRef([]);
-
-            const totalScore = marks.reduce((acc, m) => acc + (m === 'correct' ? 1 : m === 'partial' ? 0.5 : 0), 0);
-
-            const setMarkForQ = (qIdx, markType) => {
-                const nextMarks = [...marks];
-                nextMarks[qIdx] = markType;
-                setMarks(nextMarks);
-            };
 
             const toggleWordForQ = (qIdx, wordIdx) => {
                 const currentList = wrongWordsPerQ[qIdx] || [];
@@ -1160,7 +1133,7 @@
                 }
             };
 
-            const startRecording = async (qIdx) => {
+            const startGlobalRecording = async () => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     let mimeType = 'audio/webm;codecs=opus';
@@ -1177,23 +1150,21 @@
                         const reader = new FileReader();
                         reader.readAsDataURL(audioBlob);
                         reader.onloadend = () => {
-                            const nextRecordings = [...recordingsPerQ];
-                            nextRecordings[qIdx] = { audioUrl: url, audioBase64: reader.result };
-                            setRecordingsPerQ(nextRecordings);
+                            setGlobalAudio({ audioUrl: url, audioBase64: reader.result });
                         };
                     };
 
                     mediaRecorderRef.current.start();
-                    setRecordingQIdx(qIdx);
+                    setIsRecording(true);
                 } catch (err) {
                     alert("마이크 권한이 필요합니다.");
                 }
             };
 
-            const stopRecording = () => {
-                if (mediaRecorderRef.current && recordingQIdx !== null) {
+            const stopGlobalRecording = () => {
+                if (mediaRecorderRef.current && isRecording) {
                     mediaRecorderRef.current.stop();
-                    setRecordingQIdx(null);
+                    setIsRecording(false);
                 }
             };
 
@@ -1205,21 +1176,22 @@
                     const words = splitTextWithParticles(q.ko);
                     const wrongIndices = wrongWordsPerQ[qIdx] || [];
                     const markedWrongWords = wrongIndices.map(i => words[i]);
-                    const markType = marks[qIdx] || 'correct';
                     return {
                         ko: q.ko,
                         jp: q.jp,
-                        isCorrect: markType === 'correct',
-                        markType: markType,
                         wrongWords: markedWrongWords,
-                        audioDataUrl: recordingsPerQ[qIdx]?.audioBase64 || null,
                         handwritingFeedback: feedbackPerQ[qIdx] || null
                     };
                 });
 
                 const payload = {
                     action: 'saveScore',
-                    data: { studentName, score: totalScore, details }
+                    data: {
+                        studentName,
+                        score: Number(totalScore) || 0,
+                        details,
+                        globalAudioDataUrl: globalAudio.audioBase64 || null
+                    }
                 };
 
                 try {
@@ -1229,7 +1201,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
                     });
-                    alert(`전체 평가 완료!\n${studentName} 학생의 점수 (${totalScore} / ${testQuestions.length}점) 및 손글씨 피드백이 성공적으로 저장되었습니다.`);
+                    alert(`전체 평가 완료!\n${studentName} 학생의 총점 (${totalScore}점) 및 평가 데이터가 성공적으로 저장되었습니다.`);
                 } catch (e) {
                     alert("구글 시트 저장 중 에러가 발생했습니다.");
                 }
@@ -1240,42 +1212,81 @@
 
             return (
                 <div className="max-w-2xl mx-auto py-2">
+                    {/* 상단 고정 헤더 */}
                     <div className="sticky top-0 bg-white/95 backdrop-blur z-20 pb-3 border-b mb-6 shadow-sm">
                         <div className="flex justify-between items-center mb-3 pt-2">
                             <button onClick={() => setScreen('teacher-dashboard')} className="text-gray-600 font-bold text-sm hover:text-gray-900">
                                 <i className="fa-solid fa-arrow-left mr-1"></i> 대시보드
                             </button>
-                            <span className="font-extrabold text-indigo-900 text-lg">{studentName} 전체 문항 채점</span>
-                            <div className="flex items-center gap-2">
-                                <span className="bg-indigo-100 text-indigo-900 font-black text-lg px-3.5 py-1 rounded-full border border-indigo-200">
-                                    {totalScore} / {testQuestions.length} 점
-                                </span>
+                            <span className="font-extrabold text-indigo-900 text-lg">{studentName} 전체 채점</span>
+                            
+                            {/* 총점 직접 입력 부분 */}
+                            <div className="flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-xl">
+                                <span className="text-xs font-bold text-indigo-800">총점:</span>
+                                <input 
+                                    type="number" 
+                                    step="0.5" 
+                                    min="0" 
+                                    max="100" 
+                                    value={totalScore} 
+                                    onChange={(e) => setTotalScore(e.target.value)} 
+                                    className="w-16 text-center font-black text-lg text-indigo-900 bg-white border border-indigo-300 rounded-lg p-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                />
+                                <span className="text-xs font-bold text-indigo-700">점</span>
                             </div>
                         </div>
 
-                        <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                            {testQuestions.map((q, qIdx) => {
-                                const m = marks[qIdx];
-                                const colorClass = m === 'correct' ? 'bg-green-600 text-white' : m === 'partial' ? 'bg-amber-500 text-white' : 'bg-red-500 text-white';
-                                return (
-                                    <button
-                                        key={qIdx}
-                                        onClick={() => syncQuestionToStudent(qIdx)}
-                                        className={`px-2.5 py-1 text-xs font-bold rounded-lg shrink-0 flex items-center gap-1 transition-all ${colorClass}`}
+                        {/* 1회 클릭 통합 전체 녹음 컨트롤 */}
+                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 p-3 rounded-xl border border-indigo-100 flex flex-col sm:flex-row items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-indigo-900 flex items-center gap-1">
+                                    <i className="fa-solid fa-microphone text-indigo-600"></i> 수행평가 전체 음성 녹음
+                                </span>
+                            </div>
+                            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                                {isRecording ? (
+                                    <button 
+                                        onClick={stopGlobalRecording} 
+                                        className="bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-1.5 rounded-lg text-xs animate-pulse shadow flex items-center gap-1.5"
                                     >
-                                        <span>셋트 {qIdx + 1}</span>
-                                        <span className="text-[10px] opacity-90">{m === 'correct' ? 'O' : m === 'partial' ? '△' : 'X'}</span>
+                                        <i className="fa-solid fa-square"></i> 전체 녹음 중단
                                     </button>
-                                );
-                            })}
+                                ) : (
+                                    <button 
+                                        onClick={startGlobalRecording} 
+                                        className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded-lg text-xs shadow flex items-center gap-1.5"
+                                    >
+                                        <i className="fa-solid fa-microphone"></i> 전체 녹음 시작 (1회 클릭)
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {globalAudio.audioUrl && (
+                            <div className="mt-2 bg-white p-2 rounded-xl border border-indigo-100">
+                                <audio controls src={globalAudio.audioUrl} className="w-full h-8" />
+                            </div>
+                        )}
+
+                        {/* 문제 빠르게 가기 버튼 바 */}
+                        <div className="flex gap-1.5 overflow-x-auto pt-3 scrollbar-none">
+                            {testQuestions.map((q, qIdx) => (
+                                <button
+                                    key={qIdx}
+                                    onClick={() => syncQuestionToStudent(qIdx)}
+                                    className="px-3 py-1 text-xs font-bold rounded-lg shrink-0 bg-gray-100 hover:bg-indigo-100 text-gray-700 hover:text-indigo-800 border transition-all"
+                                >
+                                    셋트 {qIdx + 1}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
+                    {/* 문제 카드 목록 */}
                     <div className="space-y-6">
                         {testQuestions.map((current, qIdx) => {
                             const wordList = splitTextWithParticles(current.ko);
                             const wrongIndices = wrongWordsPerQ[qIdx] || [];
-                            const currentMark = marks[qIdx];
 
                             return (
                                 <div key={qIdx} id={`question-card-${qIdx}`} className="bg-white p-5 rounded-2xl border-2 border-gray-200 shadow-sm transition-all hover:border-indigo-200">
@@ -1328,59 +1339,6 @@
                                         )}
                                     </div>
 
-                                    <div className="grid grid-cols-3 gap-2 mb-4">
-                                        <button
-                                            onClick={() => setMarkForQ(qIdx, 'correct')}
-                                            className={`py-2.5 rounded-xl font-extrabold text-xs sm:text-sm border transition-all flex items-center justify-center gap-1.5 ${
-                                                currentMark === 'correct'
-                                                    ? 'bg-green-500 text-white border-green-600 shadow-md ring-2 ring-green-300'
-                                                    : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                                            }`}
-                                        >
-                                            <i className="fa-solid fa-circle-check"></i> O (정답 1점)
-                                        </button>
-                                        <button
-                                            onClick={() => setMarkForQ(qIdx, 'partial')}
-                                            className={`py-2.5 rounded-xl font-extrabold text-xs sm:text-sm border transition-all flex items-center justify-center gap-1.5 ${
-                                                currentMark === 'partial'
-                                                    ? 'bg-amber-500 text-white border-amber-600 shadow-md ring-2 ring-amber-300'
-                                                    : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                                            }`}
-                                        >
-                                            <i className="fa-solid fa-triangle-exclamation"></i> △ (부분 0.5점)
-                                        </button>
-                                        <button
-                                            onClick={() => setMarkForQ(qIdx, 'wrong')}
-                                            className={`py-2.5 rounded-xl font-extrabold text-xs sm:text-sm border transition-all flex items-center justify-center gap-1.5 ${
-                                                currentMark === 'wrong'
-                                                    ? 'bg-red-500 text-white border-red-600 shadow-md ring-2 ring-red-300'
-                                                    : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
-                                            }`}
-                                        >
-                                            <i className="fa-solid fa-circle-xmark"></i> X (오답 0점)
-                                        </button>
-                                    </div>
-
-                                    <div className="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100 mb-3 flex flex-col items-center gap-2">
-                                        <div className="flex justify-between items-center w-full">
-                                            <span className="text-xs font-bold text-indigo-900">
-                                                <i className="fa-solid fa-microphone text-indigo-500 mr-1"></i> 학생 개별 발음 녹음
-                                            </span>
-                                            {recordingQIdx === qIdx ? (
-                                                <button onClick={stopRecording} className="bg-red-600 text-white font-bold px-3 py-1 rounded-lg text-xs animate-pulse">
-                                                    <i className="fa-solid fa-stop mr-1"></i> 녹음 중단
-                                                </button>
-                                            ) : (
-                                                <button onClick={() => startRecording(qIdx)} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1 rounded-lg text-xs shadow-sm">
-                                                    <i className="fa-solid fa-microphone mr-1"></i> 녹음 시작
-                                                </button>
-                                            )}
-                                        </div>
-                                        {recordingsPerQ[qIdx]?.audioUrl && (
-                                            <audio controls src={recordingsPerQ[qIdx].audioUrl} className="w-full h-8 mt-1" />
-                                        )}
-                                    </div>
-
                                     <HandwritingCanvas
                                         value={feedbackPerQ[qIdx]}
                                         onChange={(dataUrl) => handleFeedbackChange(qIdx, dataUrl)}
@@ -1390,10 +1348,11 @@
                         })}
                     </div>
 
+                    {/* 하단 총점 및 구글 시트 저장 바 */}
                     <div className="mt-8 pt-4 border-t sticky bottom-4 bg-white/90 backdrop-blur p-4 rounded-2xl shadow-xl border z-20">
                         <div className="flex justify-between items-center mb-3">
-                            <span className="text-sm font-bold text-gray-700">최종 채점 합계:</span>
-                            <span className="text-2xl font-black text-indigo-600">{totalScore} / {testQuestions.length} 점</span>
+                            <span className="text-sm font-bold text-gray-700">입력된 최종 총점:</span>
+                            <span className="text-2xl font-black text-indigo-600">{totalScore} 점</span>
                         </div>
                         <button
                             onClick={handleSaveAll}
