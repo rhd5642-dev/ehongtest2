@@ -177,9 +177,9 @@
             { q_ko: "계란은 무엇 만들어?", q_jp: "たまごは なに つくる [타마와 나니 츠쿠루]", a_ko: "계란은 닭 만들어", a_jp: "たまごは にわとり つくる [타마고와 니와토리 츠쿠루]" },
             { q_ko: "닭으로 무엇 만들어?", q_jp: "にわとりで なに つくる [니와토리데 나니 츠쿠루]", a_ko: "닭으로 닭꼬치 만들어", a_jp: "にわとりで やきとり つくる [니와토리데 야키토리 츠쿠루]" },
             { q_ko: "닭꼬치는 무엇 만들어?", q_jp: "やきとりは なに つくる [야키토리와 나니 츠쿠루]", a_ko: "닭꼬치는 돈 만들어", a_jp: "やきとりは おかね つくる [야키토리와 오카네 츠쿠루]" },
-            { q_ko: "사람으로 무엇 만들어?", q_jp: "ひとで なに つくる [히토데 나니 츠쿠루]", a_ko: "사람으로 병사 만들어", a_jp: "ひとで へいたい つくる [히토데 헤-타이 츠쿠루]" },
-            { q_ko: "병사로 무엇 만들어?", q_jp: "へいたいで なに つくる [헤-타이데 나니 츠쿠루]", a_ko: "병사로 군대 만들어", a_jp: "へいたいで ぐんたい つくる [헤-타이데 군타이 츠쿠루]" },
-            { q_ko: "군대는 무엇 만들어?", q_jp: "ぐんたいは なに つくる [군타이와 나니 츠쿠루]", a_ko: "군대는 전쟁 만들어", a_jp: "ぐんたいは せんそう つくる [군타이와 센소 츠쿠루]" }
+            { q_ko: "사람으로 무엇 만들어?", q_jp: "ひとで なに つくる [히토데 なに 츠쿠루]", a_ko: "사람으로 병사 만들어", a_jp: "ひとで へいたい つくる [히토데 헤-타이 츠쿠루]" },
+            { q_ko: "병사로 무엇 만들어?", q_jp: "へいたいで なに つくる [헤-타이데 なに 츠쿠루]", a_ko: "병사로 군대 만들어", a_jp: "へいたいで ぐんたい つくる [헤-타이데 군타이 츠쿠루]" },
+            { q_ko: "군대는 무엇 만들어?", q_jp: "ぐんたいは なに つくる [군타이와 なに 츠쿠루]", a_ko: "군대는 전쟁 만들어", a_jp: "ぐんたいは せんそう つくる [군타이와 센소 츠쿠루]" }
         ];
 
         const speakJapanese = (text) => {
@@ -513,41 +513,55 @@
                     )}
 
                     <div className="space-y-4">
-                        {(resultData.details || []).map((item, qIdx) => (
-                            <div key={qIdx} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
-                                <div className="flex justify-between items-center border-b pb-3 mb-3">
-                                    <span className="bg-indigo-100 text-indigo-800 font-black text-xs px-2.5 py-1 rounded-md">
-                                        셋트 {qIdx + 1}
-                                    </span>
-                                </div>
+                        {(resultData.details || []).map((item, qIdx) => {
+                            const wordsInSentence = splitTextWithParticles(item.ko);
+                            const isAllPassed = item.wrongWords && item.wrongWords.length > 0 && item.wrongWords.length >= wordsInSentence.length;
 
-                                <div className="text-sm font-bold text-gray-800 mb-3 whitespace-pre-line bg-gray-50 p-3 rounded-xl border">
-                                    {item.ko}
-                                </div>
-
-                                {item.wrongWords && item.wrongWords.length > 0 && (
-                                    <div className="mb-3 p-2.5 bg-red-50 rounded-xl border border-red-100 text-xs">
-                                        <span className="font-bold text-red-700 mr-2">⚠️ 지적받은 발음/표현 단어:</span>
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                            {item.wrongWords.map((w, wI) => (
-                                                <span key={wI} className="bg-red-200 text-red-900 font-bold px-2 py-0.5 rounded line-through">
-                                                    {w}
+                            return (
+                                <div key={qIdx} className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm">
+                                    <div className="flex justify-between items-center border-b pb-3 mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <span className="bg-indigo-100 text-indigo-800 font-black text-xs px-2.5 py-1 rounded-md">
+                                                셋트 {qIdx + 1}
+                                            </span>
+                                            {isAllPassed && (
+                                                <span className="bg-red-500 text-white font-black text-[11px] px-2 py-0.5 rounded-full">
+                                                    [패스 (미응답)]
                                                 </span>
-                                            ))}
+                                            )}
                                         </div>
                                     </div>
-                                )}
 
-                                {item.handwritingFeedback && (
-                                    <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-200">
-                                        <p className="text-xs font-bold text-amber-900 mb-1 flex items-center gap-1">
-                                            <i className="fa-solid fa-pen-nib text-amber-600"></i> 선생님 손글씨 피드백:
-                                        </p>
-                                        <img src={item.handwritingFeedback} alt="선생님 손글씨 피드백" className="max-h-36 border rounded-lg bg-white p-1" />
+                                    <div className="text-sm font-bold text-gray-800 mb-3 whitespace-pre-line bg-gray-50 p-3 rounded-xl border">
+                                        {item.ko}
                                     </div>
-                                )}
-                            </div>
-                        ))}
+
+                                    {item.wrongWords && item.wrongWords.length > 0 && (
+                                        <div className="mb-3 p-2.5 bg-red-50 rounded-xl border border-red-100 text-xs">
+                                            <span className="font-bold text-red-700 mr-2">
+                                                {isAllPassed ? '⚠️ 문제를 통째로 패스함 (전체 오답):' : '⚠️ 지적받은 발음/표현 단어:'}
+                                            </span>
+                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                {item.wrongWords.map((w, wI) => (
+                                                    <span key={wI} className="bg-red-200 text-red-900 font-bold px-2 py-0.5 rounded line-through">
+                                                        {w}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {item.handwritingFeedback && (
+                                        <div className="bg-amber-50/50 p-3 rounded-xl border border-amber-200">
+                                            <p className="text-xs font-bold text-amber-900 mb-1 flex items-center gap-1">
+                                                <i className="fa-solid fa-pen-nib text-amber-600"></i> 선생님 손글씨 피드백:
+                                            </p>
+                                            <img src={item.handwritingFeedback} alt="선생님 손글씨 피드백" className="max-h-36 border rounded-lg bg-white p-1" />
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             );
@@ -921,31 +935,43 @@
                                         )}
 
                                         <div className="space-y-3">
-                                            {(res.details || []).map((item, qIdx) => (
-                                                <div key={qIdx} className="p-3 rounded-lg text-xs font-bold border bg-gray-50 border-gray-200 text-gray-900">
-                                                    <div className="flex justify-between items-start">
-                                                        <span className="whitespace-pre-line leading-relaxed text-sm">셋트 {qIdx+1}.\n{item.ko}</span>
+                                            {(res.details || []).map((item, qIdx) => {
+                                                const wordsInSentence = splitTextWithParticles(item.ko);
+                                                const isAllPassed = item.wrongWords && item.wrongWords.length > 0 && item.wrongWords.length >= wordsInSentence.length;
+
+                                                return (
+                                                    <div key={qIdx} className="p-3 rounded-lg text-xs font-bold border bg-gray-50 border-gray-200 text-gray-900">
+                                                        <div className="flex justify-between items-start">
+                                                            <span className="whitespace-pre-line leading-relaxed text-sm">셋트 {qIdx+1}.\n{item.ko}</span>
+                                                            {isAllPassed && (
+                                                                <span className="bg-red-500 text-white font-black text-[10px] px-2 py-0.5 rounded-full shrink-0 ml-2">
+                                                                    [패스]
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        {item.wrongWords && item.wrongWords.length > 0 && (
+                                                            <div className="mt-2 pt-2 border-t border-red-200 text-red-600 flex items-center gap-1.5 flex-wrap">
+                                                                <span className="bg-red-200 text-red-800 px-1.5 py-0.5 rounded text-[10px] font-black">
+                                                                    {isAllPassed ? '문제 패스 (전체오답)' : '틀린 단어'}
+                                                                </span>
+                                                                {item.wrongWords.map((w, wI) => (
+                                                                    <span key={wI} className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded line-through">{w}</span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+
+                                                        {item.handwritingFeedback && (
+                                                            <div className="mt-2 pt-2 border-t border-indigo-100">
+                                                                <p className="text-[11px] text-indigo-800 font-bold mb-1 flex items-center gap-1">
+                                                                    <i className="fa-solid fa-pen-nib text-indigo-600"></i> 교사 손글씨 피드백:
+                                                                </p>
+                                                                <img src={item.handwritingFeedback} alt="손글씨 피드백" className="max-h-28 border border-indigo-200 rounded-lg bg-white p-1" />
+                                                            </div>
+                                                        )}
                                                     </div>
-
-                                                    {item.wrongWords && item.wrongWords.length > 0 && (
-                                                        <div className="mt-2 pt-2 border-t border-red-200 text-red-600 flex items-center gap-1.5 flex-wrap">
-                                                            <span className="bg-red-200 text-red-800 px-1.5 py-0.5 rounded text-[10px] font-black">틀린 단어</span>
-                                                            {item.wrongWords.map((w, wI) => (
-                                                                <span key={wI} className="bg-red-100 text-red-700 px-1.5 py-0.5 rounded line-through">{w}</span>
-                                                            ))}
-                                                        </div>
-                                                    )}
-
-                                                    {item.handwritingFeedback && (
-                                                        <div className="mt-2 pt-2 border-t border-indigo-100">
-                                                            <p className="text-[11px] text-indigo-800 font-bold mb-1 flex items-center gap-1">
-                                                                <i className="fa-solid fa-pen-nib text-indigo-600"></i> 교사 손글씨 피드백:
-                                                            </p>
-                                                            <img src={item.handwritingFeedback} alt="손글씨 피드백" className="max-h-28 border border-indigo-200 rounded-lg bg-white p-1" />
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 );
@@ -1101,6 +1127,19 @@
                     : [...currentList, wordIdx];
                 const nextState = [...wrongWordsPerQ];
                 nextState[qIdx] = nextList;
+                setWrongWordsPerQ(nextState);
+            };
+
+            const toggleAllWordsAsPassed = (qIdx) => {
+                const wordList = splitTextWithParticles(testQuestions[qIdx].ko);
+                const currentList = wrongWordsPerQ[qIdx] || [];
+                const nextState = [...wrongWordsPerQ];
+
+                if (currentList.length === wordList.length) {
+                    nextState[qIdx] = [];
+                } else {
+                    nextState[qIdx] = wordList.map((_, i) => i);
+                }
                 setWrongWordsPerQ(nextState);
             };
 
@@ -1273,14 +1312,30 @@
                         {testQuestions.map((current, qIdx) => {
                             const wordList = splitTextWithParticles(current.ko);
                             const wrongIndices = wrongWordsPerQ[qIdx] || [];
+                            const isAllPassed = wordList.length > 0 && wrongIndices.length === wordList.length;
 
                             return (
                                 <div key={qIdx} id={`question-card-${qIdx}`} className="bg-white p-5 rounded-2xl border-2 border-gray-200 shadow-sm transition-all hover:border-indigo-200">
-                                    <div className="flex justify-between items-center mb-3 border-b pb-2">
+                                    <div className="flex justify-between items-center mb-3 border-b pb-2 flex-wrap gap-2">
                                         <div className="flex items-center gap-2">
                                             <span className="bg-indigo-600 text-white font-black text-xs px-2.5 py-1 rounded-md">셋트 {qIdx + 1}</span>
                                             <span className="text-xs font-bold bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-full border border-indigo-100">{current.type}</span>
+                                            
+                                            {/* 문제 패스 / 해제 버튼 */}
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleAllWordsAsPassed(qIdx)}
+                                                className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all border flex items-center gap-1 ${
+                                                    isAllPassed
+                                                        ? 'bg-red-600 text-white border-red-700 shadow-sm'
+                                                        : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                                                }`}
+                                            >
+                                                <i className="fa-solid fa-forward-step"></i>
+                                                {isAllPassed ? '패스 해제' : '문제 패스'}
+                                            </button>
                                         </div>
+
                                         <button
                                             onClick={() => syncQuestionToStudent(qIdx)}
                                             className="bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200 font-bold text-xs px-2.5 py-1 rounded-lg flex items-center gap-1 transition-all"
@@ -1291,7 +1346,7 @@
 
                                     <div className="mb-3">
                                         <p className="text-[11px] text-gray-400 font-bold mb-1.5 text-left">
-                                            💡 발음이나 표현이 틀린 단어를 클릭하면 취소선이 그어집니다.
+                                            💡 개별 단어를 클릭하거나 상단 <strong className="text-red-600">[문제 패스]</strong> 버튼으로 해당 문제를 완전히 지날 수 있습니다.
                                         </p>
                                         <div className="flex flex-wrap gap-1.5 p-3 rounded-xl bg-gray-50 border leading-relaxed">
                                             {wordList.map((word, wIdx) => {
